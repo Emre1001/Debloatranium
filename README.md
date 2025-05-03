@@ -1,52 +1,62 @@
 # Debloatranium
 
-**Debloatranium** is a modern, portable, and interactive Windows debloater tool focused on performance, style, and user control.
+Debloatranium is a comprehensive Windows debloating and optimization tool designed to remove bloatware and enhance system performance.
 
-![Debloatranium Logo](./Assets/logo.png)
+## Features
 
-## ⚙️ Features
+- **Multilingual Support**: Available in English, German, and Turkish
+- **Multiple Debloat Levels**: Choose from Minimal, Medium, High, Maximum, or Custom options
+- **System Optimization**: Improve performance by disabling unnecessary visual effects and animations
+- **Taskbar Position Customization**: Position your taskbar to your preference (left or centered)
+- **Browser Installation**: Option to install various browsers on fresh Windows installations
+- **Simple User Interface**: Easy-to-use graphical interface to guide you through the process
 
-- 💻 **Portable .exe** – no installation needed
-- 🌑 **Dark mode UI** with clean white text
-- 💡 Green LED hover animations on buttons
-- 🎧 Satisfying click sounds
-- 🚀 Fast loading screen with custom Uranium logo
-- 🧠 Auto-detects Windows version (10 or 11)
-- ❓ Asks if system is "Fresh" or "Already Set Up"
-- 🌐 Downloads selected browser if fresh
-- 🖱️ Taskbar position selector (center or left)
-- 🎨 Forces dark mode and sets custom wallpaper
-- 🔧 Debloat levels:
-  - **Light**: Only performance & network tweaks
-  - **Medium**: Removes apps like Edge, 3D Viewer, Copilot
-  - **Heavy**: Strips most bloat while keeping visual features
-  - **Max**: Removes nearly everything except core functionality
-  - **Custom**: Full control via checkboxes
-- 🔍 Detects CPU/GPU brand (Intel/AMD/NVIDIA)
-- 🧩 Applies optimal tweaks based on hardware
+## Usage
 
-## 🧪 Dev Version
+### Option 1: Run as PowerShell Script
 
-A developer version with hidden tools, extra logs, and advanced modules is available for testing.
+1. Right-click on `Debloatranium.ps1` and select "Run with PowerShell"
+2. If prompted about execution policy, you may need to run:
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+   ```
+3. Follow the on-screen instructions to select your preferences
 
-## 📦 Files Included
+### Option 2: Run as Executable (Recommended)
 
-- `Debloatranium.exe` – Main tool (self-extracting)
-- `Assets/` – Icons, logo, wallpaper
-- `README.md` – This file
-- `Source/` – Full source code
+1. Download the latest `Debloatranium.exe` from the releases page
+2. Right-click on the executable and select "Run as administrator"
+3. Follow the on-screen instructions to select your preferences
 
-## 📸 Preview
+## Building the Executable
 
-![Debloatranium UI](./Assets/preview.png)
+If you want to build the executable yourself:
 
-## 🙏 Credits
+1. Ensure you have PowerShell 5.1 or newer
+2. Run the `Build-Executable.ps1` script:
+   ```powershell
+   .\Build-Executable.ps1
+   ```
+3. The executable will be created in the `build` folder
 
-- Project by [Emre Asik](mailto:emre.asik201020@gmail.com)
-- Logo & background by Emre
-- Built with PowerShell, Windows Forms, 7-Zip SFX
+## Warning
 
----
+- The "Maximum" debloating option is extremely aggressive and may remove essential Windows components
+- Always create a system restore point or backup before using this tool
+- The tool requires administrative privileges to function properly
 
-> 🔒 This tool is safe to use but **use at your own risk**. Always back up your system before debloating.
+## Debloating Levels
 
+- **Minimal**: Only optimizes system settings, no app removal
+- **Medium**: Removes common bloatware (Paint 3D, Mixed Reality Portal, Xbox apps, etc.)
+- **High**: Removes most non-essential apps while keeping core functionality
+- **Maximum**: Removes almost all apps, may break functionality (use with caution)
+- **Custom**: Choose specific apps to remove from a checklist
+
+## License
+
+This tool is provided as-is with no warranty. Use at your own risk.
+
+## Acknowledgements
+
+Debloatranium was created to provide a comprehensive solution for Windows system optimization and bloatware removal.
