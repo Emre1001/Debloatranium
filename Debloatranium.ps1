@@ -1,301 +1,241 @@
-# Debloatranium - Windows Debloat und Browser Installer Script
-# Erfordert: Administratorrechte, PowerShell ExecutionPolicy RemoteSigned oder Bypass
+# ----------------------------------------
+# Debloatranium 2025 – Multi-level Debloat Tool
+# Modular, multilingual, with browser installation
+# by Emre's AI Helper
+# ----------------------------------------
 
-# Fehlermeldungen immer auf Englisch
-function Write-ErrorEnglish {
-    param([string]$message)
-    Write-Warning $message
-}
-
-# Admin-Rechte prüfen
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator")) {
-    Write-ErrorEnglish "This script must be run as Administrator. Please restart PowerShell with administrative privileges."
-    Write-Host "Bitte PowerShell als Administrator starten."
-    Pause
-    exit
-}
-
-# Execution Policy prüfen
-$execPolicy = Get-ExecutionPolicy
-if ($execPolicy -eq "Restricted" -or $execPolicy -eq "AllSigned") {
-    Write-ErrorEnglish "Current ExecutionPolicy ($execPolicy) prevents script execution."
-    Write-Host "Bitte in einer administrativen PowerShell diesen Befehl ausführen:"
-    Write-Host "`n    Set-ExecutionPolicy RemoteSigned`n"
-    Write-Host "Alternativ das Script so starten:"
-    Write-Host "`n    powershell.exe -ExecutionPolicy Bypass -File `"<Pfad_zum_Script>`"`n"
-    Pause
-    exit
-}
-
-# Sprachtexte
-$languages = @{
-    "de" = @{
-        "AskFreshWindows" = "Ist dies eine frische Windows-Installation? (1 = Ja, 2 = Nein)"
-        "ChooseLang" = "Sprache wählen: 1 = Deutsch, 2 = Englisch, 3 = Türkisch"
-        "InvalidInput" = "Ungültige Eingabe, bitte erneut versuchen."
-        "Downloading" = "Lade herunter und installiere: "
-        "Debloating" = "Starte Windows-Bereinigung..."
-        "Done" = "Vorgang erfolgreich abgeschlossen."
-        "NoDebloat" = "Keine Bereinigung notwendig."
-        "PressKey" = "Beliebige Taste drücken zum Beenden..."
-        "ErrorDownload" = "Fehler beim Herunterladen oder Installieren von"
-        "SkippingInstall" = "Installation übersprungen."
-        "NotFresh" = "Keine frische Windows-Installation; minimale Bereinigung wird durchgeführt."
-        "ConfirmRun" = "Sind Sie sicher, dass Sie fortfahren möchten? (1 = Ja, 2 = Nein)"
-        "ChooseCustom" = "Möchten Sie den benutzerdefinierten Modus verwenden? (1 = Ja, 2 = Nein)"
-        "ChooseBrowsers" = "Wählen Sie Browser zum Installieren (durch Komma getrennt): 1=Chrome, 2=Firefox, 3=Opera GX, 4=Opera"
-        "ChooseDebloat" = "Wählen Sie das Bereinigungslevel: 1=Minimal, 2=Maximal"
-        "Abort" = "Vorgang vom Benutzer abgebrochen. Keine Änderungen vorgenommen."
-    }
+# ------------------------------
+# 1. Spracheinstellungen & Texte
+# ------------------------------
+$Lang = @{
     "en" = @{
-        "AskFreshWindows" = "Is this a fresh Windows installation? (1 = Yes, 2 = No)"
-        "ChooseLang" = "Select language: 1 = German, 2 = English, 3 = Turkish"
-        "InvalidInput" = "Invalid input, please try again."
-        "Downloading" = "Downloading and installing: "
-        "Debloating" = "Starting Windows debloat process..."
-        "Done" = "Process completed successfully."
-        "NoDebloat" = "No debloat actions were necessary."
-        "PressKey" = "Press any key to exit..."
-        "ErrorDownload" = "Error occurred during download or installation of"
-        "SkippingInstall" = "Installation skipped."
-        "NotFresh" = "Not a fresh Windows installation; performing minimal debloat."
-        "ConfirmRun" = "Are you sure you want to proceed? (1 = Yes, 2 = No)"
-        "ChooseCustom" = "Do you want to run custom mode? (1 = Yes, 2 = No)"
-        "ChooseBrowsers" = "Select browsers to install (comma separated): 1=Chrome, 2=Firefox, 3=Opera GX, 4=Opera"
-        "ChooseDebloat" = "Choose debloat level: 1=Minimal, 2=Maximal"
-        "Abort" = "Operation aborted by user. No changes made."
-    }
-    "tr" = @{
-        "AskFreshWindows" = "Bu temiz bir Windows kurulumu mu? (1 = Evet, 2 = Hayır)"
-        "ChooseLang" = "Dil seçin: 1 = Almanca, 2 = İngilizce, 3 = Türkçe"
-        "InvalidInput" = "Geçersiz giriş, lütfen tekrar deneyin."
-        "Downloading" = "İndiriliyor ve yükleniyor: "
-        "Debloating" = "Windows temizleme işlemi başlatılıyor..."
-        "Done" = "İşlem başarıyla tamamlandı."
-        "NoDebloat" = "Temizleme işlemi gerekli değil."
-        "PressKey" = "Çıkmak için bir tuşa basın..."
-        "ErrorDownload" = "İndirme veya yükleme sırasında hata oluştu"
-        "SkippingInstall" = "Yükleme atlandı."
-        "NotFresh" = "Temiz bir Windows kurulumu değil; minimum temizleme uygulanacak."
-        "ConfirmRun" = "Devam etmek istediğinizden emin misiniz? (1 = Evet, 2 = Hayır)"
-        "ChooseCustom" = "Özel modu kullanmak istiyor musunuz? (1 = Evet, 2 = Hayır)"
-        "ChooseBrowsers" = "Yüklenecek tarayıcıları seçin (virgülle ayrılmış): 1=Chrome, 2=Firefox, 3=Opera GX, 4=Opera"
-        "ChooseDebloat" = "Temizleme seviyesini seçin: 1=Minimum, 2=Maksimum"
-        "Abort" = "İşlem kullanıcı tarafından iptal edildi. Değişiklik yapılmadı."
-    }
-}
-
-function Choose-Language {
-    while ($true) {
-        Write-Host $languages["en"]["ChooseLang"]
-        $langChoice = Read-Host
-        switch ($langChoice) {
-            "1" { return "de" }
-            "2" { return "en" }
-            "3" { return "tr" }
-            default { Write-Host $languages["en"]["InvalidInput"] }
-        }
-    }
-}
-
-function Show-SystemInfo {
-    Write-Host "System installation date is being retrieved..."
-    $installDate = (Get-CimInstance Win32_OperatingSystem).InstallDate
-    $formattedDate = [Management.ManagementDateTimeConverter]::ToDateTime($installDate)
-    Write-Host "Windows installation date: $formattedDate"
-}
-
-function Ask-FreshWindows {
-    param($lang)
-    while ($true) {
-        Write-Host $languages[$lang]["AskFreshWindows"]
-        $answer = Read-Host "1 or 2"
-        if ($answer -eq "1" -or $answer -eq "2") {
-            return $answer
-        }
-        else {
-            Write-Host $languages[$lang]["InvalidInput"]
-        }
-    }
-}
-
-function Ask-CustomMode {
-    param($lang)
-    while ($true) {
-        Write-Host $languages[$lang]["ChooseCustom"]
-        $answer = Read-Host "1 or 2"
-        if ($answer -eq "1" -or $answer -eq "2") {
-            return $answer
-        }
-        else {
-            Write-Host $languages[$lang]["InvalidInput"]
-        }
-    }
-}
-
-function Ask-Browsers {
-    param($lang)
-    Write-Host $languages[$lang]["ChooseBrowsers"]
-    while ($true) {
-        $input = Read-Host "e.g. 1,3"
-        if ($input -match "^[1-4](,[1-4])*$") {
-            $selections = $input -split ","
-            return $selections
-        }
-        else {
-            Write-Host $languages[$lang]["InvalidInput"]
-        }
-    }
-}
-
-function Ask-DebloatLevel {
-    param($lang)
-    while ($true) {
-        Write-Host $languages[$lang]["ChooseDebloat"]
-        $answer = Read-Host "1 or 2"
-        if ($answer -eq "1" -or $answer -eq "2") {
-            return $answer
-        }
-        else {
-            Write-Host $languages[$lang]["InvalidInput"]
-        }
-    }
-}
-
-function Confirm-Run {
-    param($lang)
-    while ($true) {
-        Write-Host $languages[$lang]["ConfirmRun"]
-        $answer = Read-Host "1 or 2"
-        if ($answer -eq "1" -or $answer -eq "2") {
-            return $answer
-        }
-        else {
-            Write-Host $languages[$lang]["InvalidInput"]
-        }
-    }
-}
-
-function Debloat-Windows {
-    param($lang, $level)
-    Write-Host $languages[$lang]["Debloating"]
-
-    if ($level -eq "1") {
-        # Minimal debloat
-        Get-Service -Name "DiagTrack","dmwappushservice" -ErrorAction SilentlyContinue | ForEach-Object {
-            if ($_.Status -eq "Running") { Stop-Service $_ -Force }
-            Set-Service $_ -StartupType Disabled
-        }
-        $appsMinimal = @(
-            "Microsoft.3DBuilder",
-            "Microsoft.XboxApp",
-            "Microsoft.ZuneMusic",
-            "Microsoft.ZuneVideo"
+        "Welcome"           = "Welcome to Debloatranium 2025!"
+        "ChooseLang"        = "Choose language (en/de):"
+        "ChooseLevel"       = "Select debloat level:"
+        "Options"           = @(
+            "1) Minimum - Disable telemetry only",
+            "2) Medium - Remove common bloatware apps",
+            "3) High - Aggressive system cleanup",
+            "4) Maximum - Full Windows debloat + browser install"
         )
-        foreach ($app in $appsMinimal) {
-            Get-AppxPackage -AllUsers | Where-Object { $_.Name -like "*$app*" } | Remove-AppxPackage -ErrorAction SilentlyContinue
-            Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like "*$app*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
-        }
+        "InvalidChoice"     = "Invalid choice. Exiting."
+        "Confirm"           = "Are you sure you want to continue? (Y/N):"
+        "Aborted"           = "Operation aborted by user."
+        "Running"           = "Running debloat level:"
+        "DownloadingBrowsers"= "Downloading and installing browsers..."
+        "Done"              = "Debloatranium finished successfully."
+        "Error"             = "An error occurred:"
+        "NeedAdmin"         = "Please run this script as Administrator!"
     }
-    elseif ($level -eq "2") {
-        # Maximal debloat
-        $appsMaximal = @(
-            "*Xbox*",
-            "*Zune*",
-            "*3D*",
-            "*Solitaire*",
-            "*Bing*",
-            "*MicrosoftPeople*",
-            "*WindowsFeedback*",
-            "*MicrosoftOfficeHub*",
-            "*Messaging*",
-            "*Skype*",
-            "*MicrosoftStickyNotes*",
-            "*GetHelp*",
-            "*OneNote*",
-            "*Wallet*",
-            "*YourPhone*",
-            "*MixedReality*"
+    "de" = @{
+        "Welcome"           = "Willkommen bei Debloatranium 2025!"
+        "ChooseLang"        = "Sprache wählen (en/de):"
+        "ChooseLevel"       = "Wähle Debloat-Stufe:"
+        "Options"           = @(
+            "1) Minimum - Nur Telemetrie deaktivieren",
+            "2) Mittel - Übliche Bloatware entfernen",
+            "3) Hoch - Aggressive Systembereinigung",
+            "4) Maximum - Volle Bereinigung + Browser-Installation"
         )
-        foreach ($pattern in $appsMaximal) {
-            Get-AppxPackage -AllUsers | Where-Object { $_.Name -like $pattern } | Remove-AppxPackage -ErrorAction SilentlyContinue
-            Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $pattern } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
-        }
-        Get-Service -Name "DiagTrack","dmwappushservice" -ErrorAction SilentlyContinue | ForEach-Object {
-            if ($_.Status -eq "Running") { Stop-Service $_ -Force }
-            Set-Service $_ -StartupType Disabled
-        }
-    }
-    else {
-        Write-Host $languages[$lang]["NoDebloat"]
+        "InvalidChoice"     = "Ungültige Eingabe. Programm wird beendet."
+        "Confirm"           = "Bist du sicher, dass du fortfahren willst? (J/N):"
+        "Aborted"           = "Vom Benutzer abgebrochen."
+        "Running"           = "Starte Debloat-Stufe:"
+        "DownloadingBrowsers"= "Browser werden heruntergeladen und installiert..."
+        "Done"              = "Debloatranium wurde erfolgreich abgeschlossen."
+        "Error"             = "Ein Fehler ist aufgetreten:"
+        "NeedAdmin"         = "Bitte führe das Skript als Administrator aus!"
     }
 }
 
-$browserLinks = @{
-    "1" = @{ "name" = "Chrome"; "url" = "https://dl.google.com/chrome/install/latest/chrome_installer.exe"; "args" = "/silent /install" }
-    "2" = @{ "name" = "Firefox"; "url" = "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=en-US"; "args" = "-ms" }
-    "3" = @{ "name" = "Opera GX"; "url" = "https://download.opera.com/download/get/?id=59773&location=win&nothanks=yes&sub=marine"; "args" = "/silent /install" }
-    "4" = @{ "name" = "Opera"; "url" = "https://download.opera.com/ftp/pub/opera/desktop/111.0.1661.44/win/Opera_111.0.1661.44_Setup_x64.exe"; "args" = "/silent /install" }
+# ------------------------------
+# 2. Helfer-Funktionen
+# ------------------------------
+
+# Schreibe Logs farbig in die Konsole
+function Write-Log {
+    param([string]$Message, [string]$Color="White")
+    Write-Host $Message -ForegroundColor $Color
 }
 
-function Download-And-Install {
-    param($name, $info, $lang)
-    $tempPath = "$env:TEMP\$name-setup.exe"
-    Write-Host "$($languages[$lang]['Downloading']) $name..."
+# Prüfe Adminrechte (braucht man, um Bloatware zu entfernen)
+function Check-Admin {
+    if (-not ([Security.Principal.WindowsPrincipal] `
+        [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+        [Security.Principal.WindowsBuiltinRole]::Administrator)) {
+        Write-Log $txt.NeedAdmin Red
+        exit 1
+    }
+}
+
+# Bestätigungsabfrage mit Mehrsprachigkeit
+function Confirm-Action {
+    param(
+        [string]$prompt,
+        [string]$lang
+    )
+    Write-Host $prompt -ForegroundColor Yellow
+    $answer = Read-Host
+    if ($lang -eq "de") {
+        return $answer.ToLower() -eq "j"
+    } else {
+        return $answer.ToLower() -eq "y"
+    }
+}
+
+# Entferne Windows-App & Provisioned Package sicher
+function Remove-App {
+    param([string]$packageName)
     try {
-        Invoke-WebRequest -Uri $info.url -OutFile $tempPath -UseBasicParsing -ErrorAction Stop
-        Start-Process -FilePath $tempPath -ArgumentList $info.args -Wait
-        Remove-Item $tempPath -Force
+        # Entfernt App für aktuellen User
+        Get-AppxPackage -Name $packageName -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+        # Entfernt Provisioned Package (für neue User)
+        Get-AppxProvisionedPackage -Online | Where-Object DisplayName -EQ $packageName | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+        Write-Log "Removed package: $packageName" Green
     }
     catch {
-        Write-Host "Error occurred during download or installation of $name."
+        Write-Log "Failed to remove package: $packageName" Red
     }
 }
 
-function Main {
-    $lang = Choose-Language
-    Show-SystemInfo
-    $fresh = Ask-FreshWindows -lang $lang
-
-    $custom = Ask-CustomMode -lang $lang
-
-    $selectedBrowsers = @()
-    $debloatLevel = "1"  # default minimal
-
-    if ($custom -eq "1") {
-        $selectedBrowsers = Ask-Browsers -lang $lang
-        $debloatLevel = Ask-DebloatLevel -lang $lang
+# Deaktiviere Windows-Service sicher
+function Disable-Service {
+    param([string]$serviceName)
+    try {
+        Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+        Set-Service -Name $serviceName -StartupType Disabled
+        Write-Log "Disabled service: $serviceName" Green
     }
-    else {
-        if ($fresh -eq "1") {
-            $debloatLevel = "2"
-            $selectedBrowsers = @("1","2","3","4")
-        }
-        else {
-            $debloatLevel = "1"
-            $selectedBrowsers = @()
-        }
+    catch {
+        Write-Log "Failed to disable service: $serviceName" Red
+    }
+}
+
+# Download & Install Browser mit Fehlerbehandlung
+function Download-And-Install-Browser {
+    param(
+        [string]$name,
+        [string]$url,
+        [string]$installerArgs = "/silent /install"
+    )
+    $tempInstaller = "$env:TEMP\$name-installer.exe"
+    try {
+        Write-Log "Downloading $name..." Cyan
+        Invoke-WebRequest -Uri $url -OutFile $tempInstaller -UseBasicParsing
+        Write-Log "Installing $name..." Cyan
+        Start-Process -FilePath $tempInstaller -ArgumentList $installerArgs -Wait
+        Remove-Item $tempInstaller -Force
+        Write-Log "$name installation completed." Green
+    }
+    catch {
+        Write-Log "Failed to install $name." Red
+    }
+}
+
+# ------------------------------
+# 3. Debloat Stufen Funktionen
+# ------------------------------
+
+function Debloat-Minimum {
+    Write-Log "Disabling telemetry and data collection..." Yellow
+    # Telemetry services deaktivieren
+    Disable-Service -serviceName "DiagTrack"
+    Disable-Service -serviceName "dmwappushservice"
+    Disable-Service -serviceName "lfsvc"
+}
+
+function Debloat-Medium {
+    Write-Log "Removing common bloatware apps..." Yellow
+    Remove-App "Microsoft.XboxApp"
+    Remove-App "Microsoft.XboxGamingOverlay"
+    Remove-App "Microsoft.XboxSpeechToTextOverlay"
+    Remove-App "Microsoft.OneDrive"
+    Remove-App "Microsoft.MixedReality.Portal"
+    Remove-App "Microsoft.MicrosoftSolitaireCollection"
+    Remove-App "Microsoft.SkypeApp"
+    Remove-App "Microsoft.YourPhone"
+}
+
+function Debloat-High {
+    Write-Log "Performing aggressive cleanup..." Yellow
+    Debloat-Medium
+    Remove-App "Microsoft.BingWeather"
+    Remove-App "Microsoft.GetHelp"
+    Remove-App "Microsoft.Getstarted"
+    Remove-App "Microsoft.ZuneMusic"
+    Remove-App "Microsoft.ZuneVideo"
+    Remove-App "Microsoft.WindowsMaps"
+    Remove-App "Microsoft.MSPaint"
+    Remove-App "Microsoft.WindowsCamera"
+    Remove-App "Microsoft.People"
+    Remove-App "Microsoft.Print3D"
+}
+
+function Debloat-Maximum {
+    Write-Log "Executing full debloat and installing browsers..." Yellow
+    Debloat-High
+
+    # Dienste deaktivieren
+    Disable-Service -serviceName "WSearch" # Windows Search (Indizierung deaktivieren)
+
+    Write-Log $txt.DownloadingBrowsers Cyan
+
+    # Browser installieren
+    Download-And-Install-Browser -name "Google Chrome" -url "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -installerArgs "/silent /install"
+    Download-And-Install-Browser -name "Mozilla Firefox" -url "https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US" -installerArgs "-ms"
+    Download-And-Install-Browser -name "Opera GX" -url "https://download.opera.com/gx/installer/Opera_GX_Installer.exe" -installerArgs "/silent"
+    Download-And-Install-Browser -name "Opera" -url "https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe" -installerArgs "/silent"
+}
+
+# ------------------------------
+# 4. Main Script Ablauf
+# ------------------------------
+
+try {
+    Clear-Host
+
+    # Admin check
+    Check-Admin
+
+    # Sprache auswählen
+    Write-Host $Lang.en.ChooseLang -ForegroundColor Cyan
+    $chosenLang = Read-Host
+    if ($chosenLang -ne "de" -and $chosenLang -ne "en") { $chosenLang = "en" }
+    $txt = $Lang[$chosenLang]
+
+    # Begrüßung und Menü
+    Write-Host "`n$($txt.Welcome)" -ForegroundColor Cyan
+    Write-Host $txt.ChooseLevel -ForegroundColor Yellow
+    foreach ($option in $txt.Options) {
+        Write-Host $option -ForegroundColor Green
     }
 
-    $confirm = Confirm-Run -lang $lang
-    if ($confirm -ne "1") {
-        Write-Host $languages[$lang]["Abort"]
-        Write-Host $languages[$lang]["PressKey"]
-        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    # Wahl einlesen
+    $choice = Read-Host "Enter number / Nummer eingeben"
+    if ($choice -notin "1","2","3","4") {
+        Write-Host $txt.InvalidChoice -ForegroundColor Red
         exit
     }
 
-    Debloat-Windows -lang $lang -level $debloatLevel
-
-    foreach ($b in $selectedBrowsers) {
-        if ($browserLinks.ContainsKey($b)) {
-            Download-And-Install -name $browserLinks[$b].name -info $browserLinks[$b] -lang $lang
-        }
+    # Sicherheitsabfrage
+    if (-not (Confirm-Action $txt.Confirm $chosenLang)) {
+        Write-Host $txt.Aborted -ForegroundColor Red
+        exit
     }
 
-    Write-Host $languages[$lang]["Done"]
-    Write-Host $languages[$lang]["PressKey"]
-    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-}
+    Write-Host "$($txt.Running) $choice" -ForegroundColor Yellow
 
-Main
+    # Debloat starten
+    switch ($choice) {
+        "1" { Debloat-Minimum }
+        "2" { Debloat-Medium }
+        "3" { Debloat-High }
+        "4" { Debloat-Maximum }
+    }
+
+    Write-Host "`n$($txt.Done)" -ForegroundColor Cyan
+}
+catch {
+    Write-Host "$($txt.Error) $_" -ForegroundColor Red
+    exit 1
+}
