@@ -67,30 +67,17 @@ Designed for both IT professionals and advanced home users, it offers preset cle
 
 ## 📥 Installation & Quickstart
 
-1. **Acquire Script**
+1. **Launch PowerShell as Administrator**:
 
-   * Download `Debloatranium.ps1` from this repository
-2. **Launch PowerShell as Administrator**
+   * Click Start, search for "PowerShell", right-click and select **"Run as administrator"**.
+2. **Execute Remote Script**:
 
-   ```powershell
-   Start-Process pwsh -Verb RunAs
-   ```
-3. **Allow Execution** (temporary for this session)
+   * Copy and paste the following command into the elevated PowerShell window, then press Enter:
 
-   ```powershell
-   Set-ExecutionPolicy Bypass -Scope Process -Force
-   ```
-4. **Execute Script**
-
-   ```powershell
-   .\Debloatranium.ps1
-   ```
-5. **Or use the one-liner** to fetch and run directly from GitHub:
-
-   ```powershell
-   Set-ExecutionPolicy Bypass -Scope Process -Force ;
-   & ([scriptblock]::Create((Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1")))
-   ```
+     ```powershell
+     & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1")))
+     ```
+3. **Follow the prompts** to select language, debloat level, and confirm actions.
 
 ---
 
