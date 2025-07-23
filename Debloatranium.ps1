@@ -240,15 +240,32 @@ function Download-And-Install-Browser {
     )
     $tempInstaller = "$env:TEMP\$name-installer.exe"
     try {
-        Write-Log "Downloading $name..." Cyan
-        Invoke-WebRequest -Uri $url -OutFile $tempInstaller -UseBasicParsing
-        Write-Log "Installing $name..." Cyan
-        Start-Process -FilePath $tempInstaller -ArgumentList $installerArgs -Wait
-        Remove-Item $tempInstaller -Force
-        Write-Log "$name installation completed." Green
+        Write-Log "Downloading $name from $url..." Cyan
+        # Ensure TLS 1.2 is enabled for secure downloads
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls
+
+        Invoke-WebRequest -Uri $url -OutFile $tempInstaller -UseBasicParsing -ErrorAction Stop
+
+        if (Test-Path $tempInstaller) {
+            Write-Log "Installing $name from $tempInstaller..." Cyan
+            Start-Process -FilePath $tempInstaller -ArgumentList $installerArgs -Wait -ErrorAction Stop
+            Write-Log "$name installation completed." Green
+        } else {
+            Write-Log "Error: Downloaded file for $name not found at $tempInstaller." Red
+        }
     }
     catch {
-        Write-Log "Failed to install $name. Error: $($_.Exception.Message)" Red
+        Write-Log "Failed to download or install $name." Red
+        Write-Log "Error details: $($_.Exception.Message)" Red
+        if ($_.Exception.InnerException) {
+            Write-Log "Inner Exception: $($_.Exception.InnerException.Message)" Red
+        }
+    }
+    finally {
+        # Ensure the temporary installer is removed even if there's an error
+        if (Test-Path $tempInstaller) {
+            Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
@@ -262,16 +279,16 @@ function Choose-And-Install-Browsers {
         Write-Log "You can choose which browsers to install." Yellow
 
         if (Read-YesNo "Install Google Chrome?" $lang) {
-            Download-And-Install-Browser -name "Google Chrome" -url "https://dl.google.com/chrome/install/latest/chrome_installer.exe(https://dl.google.com/chrome/install/latest/chrome_installer.exe)" -installerArgs "/silent /install"
+            Download-And-Install-Browser -name "Google Chrome" -url "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -installerArgs "/silent /install"
         }
         if (Read-YesNo "Install Mozilla Firefox?" $lang) {
-            Download-And-Install-Browser -name "Mozilla Firefox" -url "https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US(https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US)" -installerArgs "-ms"
+            Download-And-Install-Browser -name "Mozilla Firefox" -url "https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US" -installerArgs "-ms"
         }
         if (Read-YesNo "Install Opera GX?" $lang) {
-            Download-And-Install-Browser -name "Opera GX" -url "https://download.opera.com/gx/installer/Opera_GX_Installer.exe(https://download.opera.com/gx/installer/Opera_GX_Installer.exe)" -installerArgs "/silent"
+            Download-And-Install-Browser -name "Opera GX" -url "https://download.opera.com/download/get/?partner=www&os=windows&type=gx" -installerArgs "/silent"
         }
         if (Read-YesNo "Install Opera?" $lang) {
-            Download-And-Install-Browser -name "Opera" -url "https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe(https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe)" -installerArgs "/silent"
+            Download-And-Install-Browser -name "Opera" -url "https://download.opera.com/download/get/?partner=www&os=windows" -installerArgs "/silent"
         }
     } else {
         Write-Log $txt.NoBrowsersInstalled Yellow
@@ -406,3 +423,4 @@ catch {
     Write-Host "$($txt.Error) $_" -ForegroundColor Red
     exit 1
 }
+
