@@ -1,121 +1,112 @@
 # Debloatranium 2025
 
-![Debloatranium Logo](assets/logo.png)
 **Professional Windows Debloat & Browser Installer**
 
----
+Debloatranium 2025 is an enterprise-grade PowerShell tool designed to automate and streamline Windows 10 and 11 optimization. It removes unnecessary applications, disables telemetry, and offers interactive web browser installation. Fully multilingual, efficient, and secure — built for IT professionals and power users.
 
-## 📌 Overview
+## Overview
 
-Debloatranium 2025 is an enterprise-grade PowerShell automation tool that streamlines Windows 10/11 optimization by:
+Debloatranium 2025 simplifies Windows cleanup by:
 
-* Removing redundant pre-installed applications
-* Disabling telemetry and unnecessary background services
-* Silently installing leading web browsers
+* Removing redundant pre-installed apps
+* Disabling telemetry and background services
+* Interactive browser installation (Chrome, Firefox, Opera, Opera GX)
+* Multi-language user interface: English, German, Turkish
+* Five predefined debloat levels plus fully interactive custom mode
 
-Designed for both IT professionals and advanced home users, it offers preset cleanup levels and a fully granular custom mode, with English and German UI support.
+## Key Features
 
----
+Debloat Levels:
 
-## 🚀 Key Features
+* Minimum: Disables telemetry and diagnostics only
+* Medium: Removes standard bloatware (Xbox, OneDrive, etc.)
+* High: Also removes apps like Paint, Maps, Weather, and Microsoft Edge
+* Extreme: Includes disabling of security features like Windows Defender (use with caution)
+* Custom: Over 40 interactive questions for granular configuration
 
-* **Multi-Level Debloating**
+Browser Management:
 
-  * **Minimum**: Disables telemetry & data collection services only
-  * **Medium**: Removes standard bloatware (Xbox suite, OneDrive, Mixed Reality Portal, etc.)
-  * **High**: Includes Medium + aggressive app removal (Weather, Paint, Maps, etc.)
-  * **Maximum**: Full cleanup + silent installation of Chrome, Firefox, Opera GX, Opera
-* **Custom Mode**: Step-by-step interactive prompts to select individual cleanup tasks
-* **Localization**: English and German menu prompts and notifications
-* **Security & Validation**: Verifies administrator privileges and confirms critical actions
-* **Robust Error Handling**: Clear messages and safe fallbacks for uninterrupted execution
+* Pre-debloat warning if Microsoft Edge will be removed, offers immediate browser install
+* Post-debloat: always offers interactive selection (Chrome, Firefox, Opera, Opera GX)
 
----
+Multilingual Support:
 
-## 🛠️ Architecture & Modules
+* All prompts and menus are available in English, German, and Turkish
+* Language selection on startup
 
-1. **Configuration**
+Security & Stability:
 
-   * Centralized translation tables for multi-language support
-   * Versioning, author, and license metadata in script header
-2. **Helper Functions**
+* Verifies administrator privileges before running
+* Confirms critical actions
+* Built-in error handling and logging
 
-   * `Write-Log`: Consistent colorized logging
-   * `Check-Admin`: Ensures elevated execution
-   * `Confirm-Action` & `Read-YesNo`: Standardized user prompts
-   * `Remove-App` & `Disable-ServiceSafely`: Encapsulated system modifications
-   * `Install-Browser`: Unified download & silent installation logic
-3. **Debloat Modules**
+## Architecture & Modules
 
-   * **Telemetry**: Disables `DiagTrack`, `dmwappushservice`, `lfsvc`
-   * **App Removal**: Xbox, OneDrive, Mixed Reality, Solitaire, Skype, YourPhone, and more
-   * **Aggressive Cleanup**: Removes additional Windows built-in apps
-   * **Service Tuning**: Disables Windows Search compression
-   * **Browser Suite**: Installs Chrome, Firefox, Opera GX, Opera silently
-4. **Preset Levels & Custom Mode**
+Structure:
 
-   * Predefined functions invoking combinations of modules
-   * Custom mode for per-component selection
-5. **Main Execution Flow**
+* All actions are modular, organized as Debloat-<Module> functions
+* Multilingual text is handled through a centralized \$Lang hashtable
+* Logging via Write-Log
 
-   * Clear console, set ExecutionPolicy
-   * Language selection, menu presentation, choice validation
-   * Final confirmation and execution switch-case
-   * Result summary & exit handling
+Key Modules:
 
----
+* Telemetry: Disables DiagTrack, dmwappushservice, lfsvc
+* App Removal: Removes Xbox, OneDrive, Weather, Paint, Maps, Camera, Skype, and more
+* Edge Removal: Fully removes Microsoft Edge
+* Service Tuning: Disables Windows Search, Superfetch, WMP Network Sharing
+* Defender Control: Disables core Defender features (Extreme level only)
+* Browser Management: Easy selection and silent installation of major browsers
 
-## 📥 Installation & Quickstart
+## Usage Matrix
 
-1. **Launch PowerShell as Administrator**:
+| Level   | Telemetry | Standard Apps | Aggressive Apps | Services | Defender | Browser Selection |
+| ------- | --------- | ------------- | --------------- | -------- | -------- | ----------------- |
+| Minimum | ✅         | ❌             | ❌               | ❌        | ❌        | ✅ (Optional)      |
+| Medium  | ✅         | ✅             | ❌               | ❌        | ❌        | ✅ (Optional)      |
+| High    | ✅         | ✅             | ✅               | ❌        | ❌        | ✅ (Optional)      |
+| Extreme | ✅         | ✅             | ✅               | ✅        | ✅        | ✅ (Optional)      |
+| Custom  | ✅/❌ User  | ✅/❌ User      | ✅/❌ User        | ✅/❌ User | ✅/❌ User | ✅ (Optional)      |
 
-   * Click Start, search for "PowerShell", right-click and select **"Run as administrator"**.
-2. **Execute Remote Script**:
+## Installation & Quickstart
 
-   * Copy and paste the following command into the elevated PowerShell window, then press Enter:
+Launch PowerShell as Administrator, then paste the following command:
 
-     ```powershell
-     & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1")))
-     ```
-3. **Follow the prompts** to select language, debloat level, and confirm actions.
+```
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1")))
+```
 
----
+Note: Replace the URL with the actual raw GitHub URL of your script after uploading.
 
-## 🔍 Usage Matrix
+Step-by-step process:
 
-| Level   | Telemetry | Common Apps | Aggressive Apps | Services | Browsers |
-| ------- | :-------: | :---------: | :-------------: | :------: | :------: |
-| Minimum |     ✓     |      -      |        -        |     -    |     -    |
-| Medium  |     ✓     |      ✓      |        -        |     -    |     -    |
-| High    |     ✓     |      ✓      |        ✓        |     -    |     -    |
-| Maximum |     ✓     |      ✓      |        ✓        |     ✓    |     ✓    |
-| Custom  |  ✓/× user |   ✓/× user  |     ✓/× user    | ✓/× user | ✓/× user |
+1. Select your language
+2. Answer whether it's a fresh Windows install and if another browser is present
+3. Choose a debloat level (Minimum – Extreme or Custom)
+4. Confirm actions
+5. Script executes automatically
+6. Optionally select and install a browser post-debloat
+7. Displays results and optionally prompts for system reboot
 
----
+## Extensibility
 
-## 🔧 Extensibility
+* Add new Debloat-XYZ functions as needed
+* Extend language support by modifying the \$Lang hashtable
+* Improve logging using Write-Log or Start-Transcript
+* Integrate CI/CD with GitHub Actions
+* Add a GUI layer via WPF, WinForms, or Electron
 
-* **Add New Modules**: Create additional `Debloat-<Module>` functions and include them in custom mode
-* **Translate UI**: Extend `$Global:Lang` for more languages
-* **Logging**: Integrate `Start-Transcript` or write logs to file
-* **CI/CD**: Automate testing and releases via GitHub Actions
-* **GUI Frontend**: Wrap with WPF/WinForms or Electron for end-users
+## Best Practices
 
----
+* Always create a system restore point or full backup before running system-level scripts
+* Review the source code when running scripts remotely
+* Test in a virtual machine or staging environment before deploying to production
+* Check the repository regularly for updates and improvements
 
-## 🛡️ Best Practices
+## License
 
-* **Backup**: Create a system restore point or full backup before execution
-* **Review Code**: Audit script content when obtaining remotely
-* **Test**: Validate in a virtual or staging environment prior to production
-* **Update**: Regularly fetch latest script from repository for improvements and fixes
+This project is licensed under the MIT License.
+© 2025 Emre Asik. All rights reserved.
 
----
+## GitHub Repository
 
-## 📜 License
-
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
-
----
-
-*© 2025 Emre Asik. All rights reserved.*
+[https://github.com/Emre1001/Debloatranium](https://github.com/Emre1001/Debloatranium)
