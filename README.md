@@ -88,8 +88,6 @@ Start PowerShell as Administrator, then paste the following command:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1")))
 ```
 
-Note: The URL above is a placeholder. Replace [https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1](https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1) with the actual raw URL to your script on GitHub once uploaded.
-
 Follow the prompts to select language, respond to the fresh Windows/browser questions, choose your debloat level, and confirm actions. You will be guided through the process step-by-step.
 
 ## 🔍 Usage Matrix
