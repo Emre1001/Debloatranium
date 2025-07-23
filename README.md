@@ -1,112 +1,124 @@
 # Debloatranium 2025
 
-**Professional Windows Debloat & Browser Installer**
+Professional Windows Debloat & Browser Installer
 
-Debloatranium 2025 is an enterprise-grade PowerShell tool designed to automate and streamline Windows 10 and 11 optimization. It removes unnecessary applications, disables telemetry, and offers interactive web browser installation. Fully multilingual, efficient, and secure — built for IT professionals and power users.
+## 📌 Overview
 
-## Overview
+Debloatranium 2025 is an enterprise-grade PowerShell automation tool that streamlines Windows 10/11 optimization by:
 
-Debloatranium 2025 simplifies Windows cleanup by:
+* Removing redundant pre-installed applications
+* Disabling telemetry and unnecessary background services
+* Offering interactive installation of leading web browsers
 
-* Removing redundant pre-installed apps
-* Disabling telemetry and background services
-* Interactive browser installation (Chrome, Firefox, Opera, Opera GX)
-* Multi-language user interface: English, German, Turkish
-* Five predefined debloat levels plus fully interactive custom mode
+Designed for both IT professionals and advanced home users, it offers preset cleanup levels and a fully granular custom mode, with English, German, and Turkish UI support.
 
-## Key Features
+## 🚀 Key Features
 
-Debloat Levels:
+### Multi-Level Debloating
 
-* Minimum: Disables telemetry and diagnostics only
-* Medium: Removes standard bloatware (Xbox, OneDrive, etc.)
-* High: Also removes apps like Paint, Maps, Weather, and Microsoft Edge
-* Extreme: Includes disabling of security features like Windows Defender (use with caution)
-* Custom: Over 40 interactive questions for granular configuration
+* Minimum: Light tweaks, High Performance power plan, Dark Mode, removes Edge, cleans taskbar, and disables telemetry.
+* Light: Removes ultra unnecessary apps (Xbox, OneDrive, Solitaire, YourPhone, Weather, Zune) + all from Minimum.
+* Medium: Removes more apps (Outlook, Mail, Calendar, Maps, People, Camera, Calculator, Print3D) + many system & performance tweaks + all from Light.
+* High: Removes ALL apps except Paint & Photos + very many tweaks + all from Medium.
+* Extreme: Removes EVERYTHING possible (including Store, security features) for maximum performance + all from High.
+* Custom: Step-by-step interactive prompts to select individual cleanup tasks.
 
-Browser Management:
+### Intelligent Browser Management
 
-* Pre-debloat warning if Microsoft Edge will be removed, offers immediate browser install
-* Post-debloat: always offers interactive selection (Chrome, Firefox, Opera, Opera GX)
+* Pre-Debloat Warning: Warns you if Microsoft Edge might be removed and asks if you already have another browser. If not, it recommends and offers immediate browser installation.
+* Post-Debloat Selection: After the debloat process, you'll always have the option to interactively choose and install popular browsers (Chrome, Firefox, Opera GX, Opera), or skip installation entirely.
 
-Multilingual Support:
+### Localization
 
-* All prompts and menus are available in English, German, and Turkish
-* Language selection on startup
+* English, German, and Turkish menu prompts and notifications.
 
-Security & Stability:
+### Security & Validation
 
-* Verifies administrator privileges before running
-* Confirms critical actions
-* Built-in error handling and logging
+* Verifies administrator privileges and confirms critical actions.
 
-## Architecture & Modules
+### Robust Error Handling
 
-Structure:
+* Clear messages and safe fallbacks for uninterrupted execution.
 
-* All actions are modular, organized as Debloat-<Module> functions
-* Multilingual text is handled through a centralized \$Lang hashtable
-* Logging via Write-Log
+## 🛠️ Architecture & Modules
 
-Key Modules:
+### Configuration
 
-* Telemetry: Disables DiagTrack, dmwappushservice, lfsvc
-* App Removal: Removes Xbox, OneDrive, Weather, Paint, Maps, Camera, Skype, and more
-* Edge Removal: Fully removes Microsoft Edge
-* Service Tuning: Disables Windows Search, Superfetch, WMP Network Sharing
-* Defender Control: Disables core Defender features (Extreme level only)
-* Browser Management: Easy selection and silent installation of major browsers
+* Centralized translation tables for multi-language support.
 
-## Usage Matrix
+### Helper Functions
 
-| Level   | Telemetry | Standard Apps | Aggressive Apps | Services | Defender | Browser Selection |
-| ------- | --------- | ------------- | --------------- | -------- | -------- | ----------------- |
-| Minimum | ✅         | ❌             | ❌               | ❌        | ❌        | ✅ (Optional)      |
-| Medium  | ✅         | ✅             | ❌               | ❌        | ❌        | ✅ (Optional)      |
-| High    | ✅         | ✅             | ✅               | ❌        | ❌        | ✅ (Optional)      |
-| Extreme | ✅         | ✅             | ✅               | ✅        | ✅        | ✅ (Optional)      |
-| Custom  | ✅/❌ User  | ✅/❌ User      | ✅/❌ User        | ✅/❌ User | ✅/❌ User | ✅ (Optional)      |
+* Write-Log: Consistent colorized logging.
+* Check-Admin: Ensures elevated execution.
+* Confirm-Action & Read-YesNo: Standardized user prompts for Yes/No questions.
+* Remove-App & Disable-Service: Encapsulated system modifications for apps and services.
+* Download-And-Install-Browser: Unified download & silent installation logic for individual browsers.
+* Choose-And-Install-Browsers: Manages interactive selection of browsers.
 
-## Installation & Quickstart
+### Debloat Modules
 
-Launch PowerShell as Administrator, then paste the following command:
+* Telemetry: Disables DiagTrack, dmwappushservice, lfsvc.
+* App Removal: Xbox, OneDrive, Mixed Reality, Solitaire, Skype, YourPhone, BingWeather, GetHelp, Getstarted, ZuneMusic, ZuneVideo, WindowsMaps, MSPaint, WindowsCamera, People, Print3D, Outlook, Mail, Calendar, Calculator.
+* Microsoft Edge Removal: Dedicated function to uninstall Edge.
+* System Tweaks: Delivery Optimization, Driver Updates, Tips/Tricks, Lock Screen Ads, Error Reporting, Game Bar.
+* Performance Tweaks: Visual effects, Superfetch/SysMain, Windows Search service.
+* Extreme Aggressive Actions: Removes Microsoft Store, disables Windows Defender and SmartScreen, disables System Restore and Hibernation, clears temporary files.
+
+### Preset Levels & Custom Mode
+
+* Predefined functions invoking combinations of modules.
+* Custom mode for per-component selection.
+
+### Main Execution Flow
+
+* Clear console.
+* Language selection.
+* Initial Check: Prompts if it's a fresh Windows installation, warns about Edge, and offers early browser installation if needed.
+* Debloat level menu presentation and choice validation.
+* Final confirmation before execution.
+* Execution of selected debloat level.
+* Post-Debloat Browser Selection: Offers interactive browser installation if not already handled.
+* Result summary & prompt for PC restart.
+
+## 📥 Installation & Quickstart
+
+Start PowerShell as Administrator, then paste the following command:
 
 ```
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1")))
 ```
 
-Note: Replace the URL with the actual raw GitHub URL of your script after uploading.
+Note: The URL above is a placeholder. Replace [https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1](https://raw.githubusercontent.com/Emre1001/Debloatranium/refs/heads/main/Debloatranium.ps1) with the actual raw URL to your script on GitHub once uploaded.
 
-Step-by-step process:
+Follow the prompts to select language, respond to the fresh Windows/browser questions, choose your debloat level, and confirm actions. You will be guided through the process step-by-step.
 
-1. Select your language
-2. Answer whether it's a fresh Windows install and if another browser is present
-3. Choose a debloat level (Minimum – Extreme or Custom)
-4. Confirm actions
-5. Script executes automatically
-6. Optionally select and install a browser post-debloat
-7. Displays results and optionally prompts for system reboot
+## 🔍 Usage Matrix
 
-## Extensibility
+| Level   | Telemetry | Common Apps | Aggressive Apps | Services | Defender | Browser Selection |
+| ------- | --------- | ----------- | --------------- | -------- | -------- | ----------------- |
+| Minimum | ✓         | -           | -               | ✓        | -        | ✓ (Optional)      |
+| Light   | ✓         | ✓           | -               | ✓        | -        | ✓ (Optional)      |
+| Medium  | ✓         | ✓           | ✓               | ✓        | -        | ✓ (Optional)      |
+| High    | ✓         | ✓           | ✓               | ✓        | -        | ✓ (Optional)      |
+| Extreme | ✓         | ✓           | ✓               | ✓        | ✓        | ✓ (Optional)      |
+| Custom  | ✓/× user  | ✓/× user    | ✓/× user        | ✓/× user | ✓/× user | ✓ (Optional)      |
 
-* Add new Debloat-XYZ functions as needed
-* Extend language support by modifying the \$Lang hashtable
-* Improve logging using Write-Log or Start-Transcript
-* Integrate CI/CD with GitHub Actions
-* Add a GUI layer via WPF, WinForms, or Electron
+## 🔧 Extensibility
 
-## Best Practices
+* Add New Modules: Create additional Debloat-<Module> functions and integrate them into custom mode or preset levels.
+* Translate UI: Extend the \$Lang hashtable for more languages.
+* Logging: Integrate Start-Transcript or write logs to a file for detailed execution records.
+* CI/CD: Automate testing and releases via GitHub Actions.
+* GUI Frontend: Wrap with WPF/WinForms or Electron for a more user-friendly graphical interface.
 
-* Always create a system restore point or full backup before running system-level scripts
-* Review the source code when running scripts remotely
-* Test in a virtual machine or staging environment before deploying to production
-* Check the repository regularly for updates and improvements
+## 🛡️ Best Practices
 
-## License
+* Backup: Always create a system restore point or a full backup before executing system modification scripts.
+* Review Code: Audit script content when obtaining remotely to understand its full functionality.
+* Test: Validate in a virtual or staging environment prior to applying to production systems.
+* Update: Regularly fetch the latest script from the repository for improvements and fixes.
 
-This project is licensed under the MIT License.
+## 📜 License
+
+This project is licensed under the MIT License. See LICENSE for details.
 © 2025 Emre Asik. All rights reserved.
-
-## GitHub Repository
-
-[https://github.com/Emre1001/Debloatranium](https://github.com/Emre1001/Debloatranium)
