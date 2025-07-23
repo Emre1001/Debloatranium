@@ -262,16 +262,16 @@ function Choose-And-Install-Browsers {
         Write-Log "You can choose which browsers to install." Yellow
 
         if (Read-YesNo "Install Google Chrome?" $lang) {
-            Download-And-Install-Browser -name "Google Chrome" -url "[https://dl.google.com/chrome/install/latest/chrome_installer.exe](https://dl.google.com/chrome/install/latest/chrome_installer.exe)" -installerArgs "/silent /install"
+            Download-And-Install-Browser -name "Google Chrome" -url "https://dl.google.com/chrome/install/latest/chrome_installer.exe(https://dl.google.com/chrome/install/latest/chrome_installer.exe)" -installerArgs "/silent /install"
         }
         if (Read-YesNo "Install Mozilla Firefox?" $lang) {
-            Download-And-Install-Browser -name "Mozilla Firefox" -url "[https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US](https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US)" -installerArgs "-ms"
+            Download-And-Install-Browser -name "Mozilla Firefox" -url "https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US(https://download.mozilla.org/?product=firefox-stub&os=win&lang=en-US)" -installerArgs "-ms"
         }
         if (Read-YesNo "Install Opera GX?" $lang) {
-            Download-And-Install-Browser -name "Opera GX" -url "[https://download.opera.com/gx/installer/Opera_GX_Installer.exe](https://download.opera.com/gx/installer/Opera_GX_Installer.exe)" -installerArgs "/silent"
+            Download-And-Install-Browser -name "Opera GX" -url "https://download.opera.com/gx/installer/Opera_GX_Installer.exe(https://download.opera.com/gx/installer/Opera_GX_Installer.exe)" -installerArgs "/silent"
         }
         if (Read-YesNo "Install Opera?" $lang) {
-            Download-And-Install-Browser -name "Opera" -url "[https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe](https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe)" -installerArgs "/silent"
+            Download-And-Install-Browser -name "Opera" -url "https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe(https://download.opera.com/ftp/pub/opera/desktop/installs/80.0.4170.16/win/Opera_80.0.4170.16_Setup.exe)" -installerArgs "/silent"
         }
     } else {
         Write-Log $txt.NoBrowsersInstalled Yellow
