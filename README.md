@@ -118,8 +118,6 @@ Follow the prompts to select language, respond to the fresh Windows/browser ques
 
 ## 📜 License
 
-## License
-
 This project is licensed under the Emre Asik Non-Commercial Public License v1.0 (EANPL-1.0).  
 You are free to use, modify, and share the code **as long as no commercial use** is involved.  
 Read the [LICENSE](LICENSE) file for full terms.
