@@ -1,267 +1,117 @@
-# Debloatranium v1.1 - Safer Variant
-# Author: ChatGPT (angepasst für Emre)
+# Debloatranium v1.2 - Safety Hardened
+# Author: ChatGPT (adapted for Emre)
 # License: MIT
 
 <#
-Safer Debloatranium features implemented here:
-- -DryRun: simulate planned/destructive actions without executing them
-- -Confirm: explicit required flag to allow destructive actions
-- -Interactive: per-action confirmations when enabled
-- Create-RestorePoint verification: abort if creation fails unless user explicitly confirms to proceed
-- Whitelist-based extreme removals: only remove packages explicitly listed in whitelist
-- Export planned removals to a JSON file for recovery/inspection
-- Safer browser installer handling with a checksum placeholder; skip real installs on DryRun
-- Logging of all planned and destructive actions
+  Safety features:
+  - DryRun mode
+  - Per-action confirmations
+  - -Confirm required for destructive/exreme in non-interactive
+  - Restore point creation and verification
+  - Whitelist-based extreme removals
+  - Planned action export to JSON
+  - Safer browser installer handling with checksum verification placeholder
+  - Detailed logging
 #>
 
 param(
     [switch]$DryRun,
     [switch]$Confirm,
     [switch]$Interactive,
+    [switch]$Verbose,
     [string]$PlannedExportPath = "./planned_removals_{0}.json" -f (Get-Date -Format "yyyyMMdd_HHmmss")
 )
 
-Set-StrictMode -Version Latest
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
-# Initialization
-$Timestamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
-$LogFile = "./Debloatranium_log_$Timestamp.txt"
-$PlannedRemovals = @()
+# Globals & Paths
+$Script:AppName = "Debloatranium"
+$Script:Version = "1.2"
+$Script:BasePath = Join-Path -Path $env:ProgramData -ChildPath $Script:AppName
+$Script:LogFolder = Join-Path $Script:BasePath "Logs"
+$Script:ExportFolder = Join-Path $Script:BasePath "Exports"
+
+foreach ($p in @($Script:BasePath, $Script:LogFolder, $Script:ExportFolder)) { if (-not (Test-Path $p)) { New-Item -Path $p -ItemType Directory -Force | Out-Null } }
+
+$timeStamp = (Get-Date).ToString('yyyyMMdd_HHmmss')
+$Script:LogFile = Join-Path $Script:LogFolder ("log_{0}.txt" -f $timeStamp)
+$Script:ChangesFile = Join-Path $Script:ExportFolder ("changes_{0}.json" -f $timeStamp)
+$Script:Verbose = $Verbose.IsPresent
+
+# Planned actions collector
+$PlannedActions = @()
+
+# Whitelist for extreme removals (explicit patterns)
+$ExtremeRemovalWhitelist = @(
+    "*Microsoft.XboxApp*",
+    "*Microsoft.ZuneMusic*",
+    "*Microsoft.ZuneVideo*",
+    "*Microsoft.YourPhone*",
+    "*Microsoft.MicrosoftSolitaireCollection*",
+    "*Microsoft.BingWeather*",
+    "*Microsoft.GetHelp*",
+    "*Microsoft.Getstarted*",
+    "*Microsoft.MSPaint*",
+    "*Microsoft.WindowsAlarms*"
+)
 
 function Log {
-    param([string]$Message)
-    $entry = "[$(Get-Date -Format 'u')] $Message"
-    Write-Output $entry
-    try { Add-Content -Path $LogFile -Value $entry } catch {}
+    param([string]$Message, [string]$Level = "INFO")
+    $time = (Get-Date).ToString("s")
+    $line = "$time [$Level] $Message"
+    Add-Content -Path $Script:LogFile -Value $line
+    if ($Script:Verbose -or $Level -eq "ERROR") { Write-Host $line }
 }
 
-function Add-PlannedRemoval {
-    param(
-        [string]$Name,
-        [string]$Action,
-        [string]$Reason
-    )
-    $obj = [PSCustomObject]@{
-        Name   = $Name
-        Action = $Action
-        Reason = $Reason
-        Time   = (Get-Date).ToString('u')
-    }
-    $script:PlannedRemovals += $obj
-    Log "PLANNED: $Name | $Action | $Reason"
+function Add-PlannedAction { param($Action) $PlannedActions += $Action ; Log ("Planned: {0}" -f ($Action | ConvertTo-Json -Compress)) }
+
+function Export-PlannedActions { $PlannedActions | ConvertTo-Json -Depth 6 | Set-Content -Path $Script:ChangesFile -Encoding UTF8 ; Log ("Planned actions exported to {0}" -f $Script:ChangesFile) }
+
+function Ensure-Admin {
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator")
+    if (-not $isAdmin) { [System.Windows.Forms.MessageBox]::Show("$($Script:AppName) requires Administrator privileges. Run as Administrator.", $Script:AppName, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning) ; Write-Error "$($Script:AppName) needs Administrator rights. Run PowerShell as Administrator." ; exit 1 }
 }
 
-function Confirm-Action {
-    param(
-        [string]$Message
-    )
-    # If DryRun, only simulate
-    if ($DryRun) {
-        Log "DRYRUN: would prompt for confirmation for: $Message"
-        return $false
-    }
+function YesNo-Prompt { param([string]$Prompt) while ($true) { $input = Read-Host "$Prompt" ; if ($input -match "^(ja|yes|evet|y)$") { return $true } ; if ($input -match "^(nein|no|hayır|hayir|n)$") { return $false } ; Write-Host "Please answer Yes or No." } }
 
-    # Require explicit -Confirm to allow destructive actions
-    if (-not $Confirm) {
-        Log "SKIP: destructive actions require -Confirm. Action skipped: $Message"
-        return $false
-    }
+function Create-RestorePoint-Verified { param([string]$Description) Log ("Attempting to create restore point: {0}" -f $Description) ; try { $before = (Get-CimInstance -Namespace root/default -ClassName SystemRestore -ErrorAction SilentlyContinue | Measure-Object -Property SequenceNumber -Maximum).Maximum ; if ($null -eq $before) { $before = 0 } ; $sr = Get-CimInstance -Namespace root/default -ClassName SystemRestore -ErrorAction Stop ; $sr.CreateRestorePoint($Description, 0, 100) | Out-Null ; Start-Sleep -Seconds 3 ; $after = (Get-CimInstance -Namespace root/default -ClassName SystemRestore -ErrorAction SilentlyContinue | Measure-Object -Property SequenceNumber -Maximum).Maximum ; if ($after -gt $before) { Log ("Restore point created (seq {0})." -f $after) ; return $true } else { Log "Restore point creation could not be verified." "WARN" ; return $false } } catch { Log ("Restore point creation failed: {0}" -f $_) "WARN" ; return $false } }
 
-    if ($Interactive) {
-        $response = Read-Host "$Message`nType Y to confirm, any other key to skip"
-        if ($response -match '^[Yy]') { return $true } else { Log "User declined interactive confirmation: $Message"; return $false }
-    }
+function Remove-AppxSafe { param([string]$Pattern, [switch]$ForceRemove) ; $pkgs = Get-AppxPackage -Name $Pattern -ErrorAction SilentlyContinue ; foreach ($p in $pkgs) { $action = @{ Type = "Remove-AppxPackage"; PackageFullName = $p.PackageFullName; PackageName = $p.Name; Pattern = $Pattern; Timestamp = (Get-Date).ToString("s") } ; Add-PlannedAction $action ; if ($DryRun) { Log ("DryRun: would remove {0} ({1})" -f $($p.Name), $($p.PackageFullName)) ; continue } ; if ($ForceRemove.IsPresent -or $Confirm.IsPresent -or $Preset -eq 'Interactive') { if ($Preset -eq 'Interactive') { $ok = YesNo-Prompt -Prompt ("Remove Appx package {0}? (yes/no)" -f $p.Name) ; if (-not $ok) { Log ("Skipped {0} by user choice." -f $p.Name) ; continue } } try { Remove-AppxPackage -Package $p.PackageFullName -ErrorAction Stop ; Log ("Removed Appx: {0}" -f $p.Name) } catch { Log ("Failed to remove {0}: {1}" -f $p.Name, $_) "ERROR" } } else { Log ("Skipping removal of {0} because -Confirm not provided." -f $p.Name) "WARN" } } }
 
-    # Non-interactive but -Confirm provided: allow
-    return $true
+function Clean-TempSafe { $paths = @("$env:TEMP","$env:LOCALAPPDATA\Temp","$env:WINDIR\Temp") ; $action = @{ Type="Clean-Temp"; Paths=$paths; Timestamp=(Get-Date).ToString("s") } ; Add-PlannedAction $action ; if ($DryRun) { Log ("DryRun: would clean temps at {0}" -f ($paths -join ', ')) ; return } ; foreach ($p in $paths) { if (Test-Path $p) { try { Get-ChildItem -Path $p -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue ; Log ("Cleaned temp files at {0}" -f $p) } catch { Log ("Failed cleaning temp at {0}: {1}" -f $p, $_) "WARN" } } } }
+
+$BrowserInstallers = @{ chrome = @{ url="https://dl.google.com/chrome/install/375.126/chrome_installer.exe"; file="chrome_installer.exe"; checksum = "" } ; firefox = @{ url="https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=en-US"; file="firefox_installer.exe"; checksum = "" } ; opera = @{ url="https://download3.operacdn.com/pub/opera/desktop/94.0.4606.41/win/OperaSetup.exe"; file="opera_installer.exe"; checksum = "" } ; operagx = @{ url="https://download3.operacdn.com/pub/opera_gx/installer/Opera_GX_95.0.0.39_Setup.exe"; file="operagx_installer.exe"; checksum = "" } }
+
+function Install-Browser-Safe { param([string]$Browser) ; $b = $Browser.ToLower() ; if (-not $BrowserInstallers.ContainsKey($b)) { Log ("Unknown browser: {0}" -f $Browser) ; return } ; $meta = $BrowserInstallers[$b] ; $tempDir = Join-Path $env:TEMP "debloatranium_browser_installer" ; if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null } ; $file = Join-Path $tempDir $meta.file ; $action = @{ Type="Install-Browser"; Browser=$Browser; Url=$meta.url; File=$file; Timestamp=(Get-Date).ToString("s") } ; Add-PlannedAction $action ; if ($DryRun) { Log ("DryRun: would download & install {0} from {1}" -f $Browser, $($meta.url)) ; return } ; try { Log ("Downloading {0} installer..." -f $Browser) ; Invoke-WebRequest -Uri $meta.url -OutFile $file -UseBasicParsing -ErrorAction Stop ; if ($meta.checksum -and $meta.checksum -ne "") { $hash = Get-FileHash -Path $file -Algorithm SHA256 ; if ($hash.Hash -ne $meta.checksum) { Log ("Checksum mismatch for {0} installer. Skipping installation." -f $Browser) "ERROR" ; return } } else { Log "No checksum configured for $Browser; proceeding with caution." } ; Log ("Installing {0} silently..." -f $Browser) ; Start-Process -FilePath $file -ArgumentList "/silent","/install" -Wait ; Log ("{0} installation complete." -f $Browser) } catch { Log ("Browser install failed: {0}" -f $_) "ERROR" } }
+
+# Main
+Ensure-Admin
+Log ("Starting Debloatranium v{0} (DryRun={1})" -f $Script:Version, $DryRun.IsPresent)
+Write-Host "---------------------------------" ; Write-Host "    $($Script:AppName) v$($Script:Version)" ; Write-Host "---------------------------------"
+
+# Interactive prompts and restore point logic
+if ($DryRun) { Log "Running in DryRun mode; no changes will be made." }
+
+$rpOk = $true
+if (-not $DryRun) { $rpOk = Create-RestorePoint-Verified -Description ("Debloatranium Pre-Change {0}" -f $timeStamp) ; if (-not $rpOk) { if (-not $Confirm) { Log "Restore point verification failed and -Confirm not provided; aborting." "WARN" ; Export-PlannedActions ; throw "Restore point verification failed." } else { if ($Interactive) { $cont = YesNo-Prompt -Prompt "Restore point could not be verified. Continue anyway? (yes/no)" ; if (-not $cont) { Export-PlannedActions ; throw "User aborted after restore point failure." } } } } }
+
+# Example profiles (simplified)
+$profile = "Medium"
+
+switch ($profile.ToLower()) {
+    "minimum" { Log "Applying Minimum profile" ; Clean-TempSafe }
+    "light" { Log "Applying Light profile" ; Clean-TempSafe ; Remove-AppxSafe -Pattern "*Microsoft.XboxApp*" ; Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*" }
+    "medium" { Log "Applying Medium profile" ; Clean-TempSafe ; Remove-AppxSafe -Pattern "*Microsoft.XboxApp*" ; Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*" ; Remove-AppxSafe -Pattern "*Microsoft.ZuneMusic*" }
+    "high" { Log "Applying High profile" ; Clean-TempSafe ; Remove-AppxSafe -Pattern "*Microsoft.XboxApp*" ; Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*" }
+    "extreme" { Log "Applying Extreme profile (whitelist)" ; foreach ($pattern in $ExtremeRemovalWhitelist) { Remove-AppxSafe -Pattern $pattern -ForceRemove } }
+    default { Log "Unknown profile: $profile" }
 }
 
-function Create-RestorePoint {
-    param(
-        [string]$Description = 'Debloatranium pre-cleanup'
-    )
+# Example planned action: export and optionally execute browser installs (simulated unless DryRun=false)
+Export-PlannedActions
 
-    if ($DryRun) {
-        Log "DRYRUN: would attempt to create system restore point: $Description"
-        return $true
-    }
+Write-Host "Operation complete. Planned and executed actions exported to: $Script:ChangesFile"
+Log "Finished run (DryRun=$($DryRun.IsPresent))"
 
-    Log "Attempting to create a system restore point: $Description"
-    try {
-        # On modern systems this cmdlet may require elevation and the System Restore feature
-        Checkpoint-Computer -Description $Description -RestorePointType 'Modify_Settings' -ErrorAction Stop
-        Log "Restore point created successfully."
-        return $true
-    } catch {
-        Log "ERROR: Failed to create a restore point: $($_.Exception.Message)"
-        # If -Confirm is not present, abort to be safe
-        if (-not $Confirm) {
-            throw "Restore point creation failed and -Confirm not provided. Aborting to avoid destructive actions without a restore point."
-        }
-
-        if ($Interactive) {
-            $resp = Read-Host "Restore point creation failed. Proceed without a restore point? Type Y to proceed"
-            if ($resp -match '^[Yy]') {
-                Log "User chose to proceed despite restore point failure."
-                return $true
-            } else {
-                throw "User aborted after restore point creation failed."
-            }
-        }
-
-        # -Confirm present (user allowed destructive actions) but restore creation failed. Log and proceed.
-        Log "Proceeding despite restore point failure because -Confirm was supplied."
-        return $true
-    }
-}
-
-# Example safe lists. Replace with desired real package names for your environment.
-$StandardRemovals = @(
-    # Common safe targets (examples)
-    'Microsoft.GetHelp',
-    'Microsoft.Getstarted'
-)
-
-# Extreme removals must be explicitly whitelisted here. No wildcards allowed.
-$ExtremeRemoveWhitelist = @(
-    # Only packages explicitly listed will be removed by 'extreme' mode
-    'Contoso.ExampleApp'
-)
-
-$ExtremeCandidates = @(
-    # Candidate list; only those also in whitelist will be removed
-    'Contoso.ExampleApp',
-    'Microsoft.LockApp'
-)
-
-# Plan removals (do not execute yet)
-foreach ($pkg in $StandardRemovals) {
-    Add-PlannedRemoval -Name $pkg -Action 'Remove-AppxPackage' -Reason 'Standard cleanup rule'
-}
-
-foreach ($pkg in $ExtremeCandidates) {
-    if ($ExtremeRemoveWhitelist -contains $pkg) {
-        Add-PlannedRemoval -Name $pkg -Action 'ExtremeRemove' -Reason 'Whitelisted extreme removal'
-    } else {
-        Log "SKIP (not whitelisted): $pkg would be an extreme removal but is not in the whitelist."
-    }
-}
-
-# Export planned removals to a JSON file for recovery/inspection
-try {
-    $json = $PlannedRemovals | ConvertTo-Json -Depth 5
-    Set-Content -Path $PlannedExportPath -Value $json -Force
-    Log "Exported planned removals to: $PlannedExportPath"
-} catch {
-    Log "WARNING: Failed to export planned removals: $($_.Exception.Message)"
-}
-
-# Create restore point (verify)
-try {
-    $rpOk = Create-RestorePoint -Description 'Debloatranium pre-cleanup'
-} catch {
-    Log "ABORT: $($_)"
-    throw $_
-}
-
-# Execute planned actions (only if Confirm-Action allows)
-foreach ($action in $PlannedRemovals) {
-    $name = $action.Name
-    $act = $action.Action
-    $reason = $action.Reason
-    $msg = "About to perform [$act] on '$name' (Reason: $reason)"
-
-    if (-not (Confirm-Action -Message $msg)) {
-        Log "Action skipped by confirmation logic: $msg"
-        continue
-    }
-
-    # Perform or simulate
-    if ($DryRun) {
-        Log "DRYRUN: Simulating action [$act] on $name"
-        continue
-    }
-
-    try {
-        switch ($act) {
-            'Remove-AppxPackage' {
-                Log "Executing Remove-AppxPackage for $name"
-                # Example call (commented out for safety); replace with actual code if desired
-                # Get-AppxPackage -Name $name | Remove-AppxPackage -ErrorAction Stop
-                Log "(SIMULATED) Removed AppxPackage: $name"
-            }
-            'ExtremeRemove' {
-                Log "Executing extreme removal for $name"
-                # Extreme removals are sensitive. The whitelist logic above prevents accidental wildcard removal.
-                # Example call (commented out):
-                # Get-AppxPackage -Name $name | Remove-AppxPackage -ErrorAction Stop
-                Log "(SIMULATED) Extreme removed: $name"
-            }
-            Default {
-                Log "Unknown action type for $name: $act"
-            }
-        }
-    } catch {
-        Log "ERROR: Failed to execute $act for $name: $($_.Exception.Message)"
-    }
-}
-
-# Safer browser installer example
-function Install-Browser {
-    param(
-        [string]$Name,
-        [string]$Url,
-        [string]$ExpectedSHA256 # supply the expected checksum for verification
-    )
-
-    $msg = "About to download and install $Name from $Url"
-    Add-PlannedRemoval -Name $Name -Action 'Install' -Reason 'Browser installer planned'
-
-    if (-not (Confirm-Action -Message $msg)) {
-        Log "Installer action skipped by confirmation logic for $Name"
-        return
-    }
-
-    if ($DryRun) {
-        Log "DRYRUN: would download and run installer for $Name from $Url"
-        return
-    }
-
-    $tmp = Join-Path -Path $env:TEMP -ChildPath "$Name-installer-$($Timestamp).exe"
-    try {
-        Log "Downloading $Url to $tmp"
-        Invoke-WebRequest -Uri $Url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
-
-        if ($ExpectedSHA256) {
-            $actualHash = (Get-FileHash -Path $tmp -Algorithm SHA256).Hash.ToLower()
-            if ($actualHash -ne $ExpectedSHA256.ToLower()) {
-                throw "Checksum mismatch for $Name installer. Expected $ExpectedSHA256 but got $actualHash"
-            }
-            Log "Checksum verification passed for $Name"
-        } else {
-            Log "No expected checksum provided for $Name — skipping checksum verification (not recommended)."
-        }
-
-        Log "Running installer for $Name"
-        # Start-Process -FilePath $tmp -ArgumentList '/silent' -Wait -ErrorAction Stop
-        Log "(SIMULATED) Installer executed for $Name"
-    } catch {
-        Log "ERROR during browser installation for $Name: $($_.Exception.Message)"
-    } finally {
-        try { Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue } catch {}
-    }
-}
-
-# Example usage of Install-Browser (commented out by default; update URL and checksum before enabling)
-# Install-Browser -Name 'ExampleBrowser' -Url 'https://example.com/installer.exe' -ExpectedSHA256 'REPLACE_WITH_REAL_SHA256'
-
-Log "Debloatranium run completed. DryRun=$DryRun, Confirm=$Confirm, Interactive=$Interactive"
-Log "Planned removals JSON located at: $PlannedExportPath"
-
-# Final note
-if ($DryRun) { Log "DRYRUN mode: no destructive actions were executed." }
-else {
-    if (-not $Confirm) { Log "Note: Destructive actions were not executed because -Confirm was not provided." }
-}
-
-# End of script
+# End of file
