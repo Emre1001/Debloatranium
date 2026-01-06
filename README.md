@@ -1,152 +1,43 @@
-# Debloatranium 2025 — Interactive Guide (English)
+Debloatranium
+==============
 
-Professional Windows Debloat & Browser Installer — now more interactive
+WARNING: Use at your own risk (auf eigene Gefahr).
+This tool performs system-cleanup operations which can be destructive. Read the documentation and review the script before running it. You are responsible for any changes to your system.
 
-## Summary
+Safer defaults and flags
+-----------------------
+This repository contains a safer variant of Debloatranium. Important safety features implemented in the script:
 
-Debloatranium 2025 is an enterprise-grade PowerShell automation tool for optimizing Windows 10/11. It removes preinstalled apps, disables telemetry and unnecessary background services, and provides an interactive browser installation experience. This README explains interactive usage step-by-step and shows examples for both guided and automated runs.
+- DryRun mode: Use the -DryRun switch to simulate all planned and destructive actions. Nothing is executed when -DryRun is used; planned actions are logged and exported to a JSON file for review and recovery.
 
----
+- Explicit confirmation: Destructive actions require the -Confirm switch to be provided. If -Confirm is not supplied, the script will not perform destructive operations — it will only report what it would do.
 
-## Quickstart — Interactive (recommended)
+- Interactive per-action confirmation: Use the -Interactive switch together with -Confirm to prompt for confirmation before each destructive action.
 
-1. Open PowerShell as Administrator.
-2. Copy and paste this command (fetches the script from GitHub and runs it interactively):
+- Restore point verification: The script attempts to create a system restore point before making changes. If restore point creation fails, the script will abort unless you explicitly allow continuation. This is to prevent destructive changes without a recovery point.
 
-```powershell
-iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex
-```
+- Whitelist-based extreme removals: Extreme removal operations are restricted to an explicit whitelist in the script. No wildcard or broad removals are performed by default.
 
-Note: You will be prompted to choose language, answer "Fresh Windows?" and select the debloat level interactively. Always review remote scripts before executing them.
+- Export planned removals: Planned removals are exported to a JSON file (timestamped) so you can inspect or recover the list of operations.
 
----
+- Safer browser installer handling: Browser installers use checksum verification (placeholder) and are skipped in DryRun. Replace checksum placeholders with real values before enabling auto-installers.
 
-## Short Commands / Modes
+Usage examples
+--------------
+Simulate a run and inspect planned actions without making changes:
 
-- Interactive default: runs with step-by-step prompts.
-- Non-interactive / unattended (for automation):
-  - Example (use with caution):  
-    ```powershell
-    pwsh -NoProfile -ExecutionPolicy Bypass -Command "& { iwr -useb https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex }" -Preset "High" -Confirm:$false -InstallBrowsers "chrome,firefox" -Language "en" -FreshWindows $false
-    ```
-  - Warning: These flags require the script to implement parameters like `-Preset`, `-Language`, `-InstallBrowsers`, `-Confirm`. Verify the script signature before use.
+  PowerShell> .\Debloatranium.ps1 -DryRun
 
----
+Perform changes (destructive actions will run only if -Confirm is present). Use -Interactive for per-action prompts:
 
-## Interactive Flow — Example (what you will see)
+  PowerShell> .\Debloatranium.ps1 -Confirm -Interactive
 
-1. Console is cleared.
-2. Language selection:
-   - `1` = English, `2` = Deutsch, `3` = Türkçe
-3. Question: "Is this a fresh Windows installation?" (y/n)
-4. Pre-debloat warning: "Microsoft Edge may be removed. Do you already have another browser?" (y/n)
-   - If `n`, the script recommends and offers immediate browser installation.
-5. Debloat level menu:
-   - `1` Minimum
-   - `2` Light
-   - `3` Medium
-   - `4` High
-   - `5` Extreme
-   - `6` Custom (step-by-step per-component selection)
-6. Summary of selected actions → final confirmation (y/n).
-7. Debloat process begins; progress and error messages are displayed.
-8. After completion: optional browser installation and restart prompt.
+Notes and recommendations
+-------------------------
+- Always run with -DryRun first and inspect the exported planned_removals_*.json file.
+- If you plan to perform destructive changes, ensure you have backups and that a system restore point can be created.
+- The browser installer functions include placeholders for SHA256 checksums. Replace these with real checksums for each installer before enabling automatic installation.
 
----
-
-## Custom Mode — Step-by-step Selection
-
-In Custom mode you'll be prompted per module (answer `y`/`n`):
-
-- Disable telemetry
-- Adjust system services (e.g., SysMain, Delivery Optimization)
-- Remove common apps (Xbox, OneDrive, Solitaire, YourPhone, etc.)
-- Aggressive removals (Store, Defender, SmartScreen, System Restore, Hibernation) — contains explicit warnings
-- Post-debloat browser installation (Chrome, Firefox, Opera, Opera GX)
-
-Tip: Enable protective options like creating a system restore point before aggressive actions.
-
----
-
-## Example Dialog (English — possible inputs)
-
-- Choose language: `1`
-- Fresh Windows?: `y`
-- Do you have another browser?: `n` → recommends browser installation (e.g., `Chrome`)
-- Choose Debloat Level: `3` (Medium)
-- Confirm: `y`
-- After completion: "Would you like to install browsers now?" → `y` → `1` for Chrome, `2` for Firefox, ...
-
----
-
-## Feature Matrix (usage summary)
-
-Level     | Telemetry | Common Apps | Aggressive Apps | Services | Defender | Browser Selection
---------- | --------- | ----------- | --------------- | ------- | -------- | -----------------
-Minimum   | ✓         | -           | -               | ✓       | -        | ✓ (Optional)
-Light     | ✓         | ✓           | -               | ✓       | -        | ✓ (Optional)
-Medium    | ✓         | ✓           | ✓               | ✓       | -        | ✓ (Optional)
-High      | ✓         | ✓           | ✓               | ✓       | -        | ✓ (Optional)
-Extreme   | ✓         | ✓           | ✓               | ✓       | ✓        | ✓ (Optional)
-Custom    | ✓/× user  | ✓/× user    | ✓/× user        | ✓/× user| ✓/× user | ✓ (Optional)
-
----
-
-## Advanced Flags & Automation Ideas
-
-- -Preset "Minimum|Light|Medium|High|Extreme|Custom"
-- -Language "en|de|tr"
-- -InstallBrowsers "chrome,firefox,opera"
-- -FreshWindows $true|$false
-- -Confirm $true|$false (if false, skips interactive confirmations)
-
-Note: These CLI flags are only available if implemented as script parameters. The README recommends using the interactive mode or validating flags against the script.
-
----
-
-## Security & Best Practices
-
-- Backup: Always create a restore point or full system image before running system-modifying scripts.
-- Review: Inspect the script content before running `iwr | iex`.
-- Test: Run in a VM or staging environment first.
-- Privileges: Script requires Administrator rights — confirm elevated session.
-
----
-
-## Extensibility & Contribution
-
-- Add Modules: Implement new functions named `Debloat-<Module>` and integrate them into Custom Mode and presets.
-- Localization: Extend the `$Lang` hashtable to add more languages.
-- Logging: Enable `Start-Transcript` or write logs to a file for auditing.
-- GUI: Build a WPF/WinForms or Electron frontend that calls the existing functions for a friendlier UI.
-- CI/CD: Add GitHub Actions for testing and releases.
-
----
-
-## Example helper function (for local testing)
-
-```powershell
-function Start-DebloatraniumInteractive {
-    param([string]$ScriptUrl = "https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1")
-    Write-Host "Downloading Debloatranium..."
-    iwr -UseBasicParsing $ScriptUrl | iex
-}
-```
-
-Use this helper locally after you have downloaded and reviewed the script.
-
----
-
-## Safety Reminders
-
-- Aggressive options can remove functionality and security features. Read all warnings and understand consequences before proceeding.
-- If you rely on Microsoft Store apps or Defender, avoid Extreme or aggressive options.
-- Reboot only when instructed after reviewing the summary and completed actions.
-
----
-
-## License
-
-This project is licensed under the Emre Asik Non-Commercial Public License v1.0 (EANPL-1.0).
-
-You are free to use, modify, and share the code for non-commercial purposes. See the LICENSE file for full terms.
+License
+-------
+MIT

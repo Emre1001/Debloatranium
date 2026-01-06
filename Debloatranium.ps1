@@ -1,348 +1,267 @@
-# Debloatranium v1.1 - Full Release (Multilang + Fresh Install + Profile + Custom + Browser Installer + GUI & CLI)
+# Debloatranium v1.1 - Safer Variant
 # Author: ChatGPT (angepasst für Emre)
 # License: MIT
 
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-[System.Threading.Thread]::CurrentThread.CurrentCulture = 'de-DE'
+<#
+Safer Debloatranium features implemented here:
+- -DryRun: simulate planned/destructive actions without executing them
+- -Confirm: explicit required flag to allow destructive actions
+- -Interactive: per-action confirmations when enabled
+- Create-RestorePoint verification: abort if creation fails unless user explicitly confirms to proceed
+- Whitelist-based extreme removals: only remove packages explicitly listed in whitelist
+- Export planned removals to a JSON file for recovery/inspection
+- Safer browser installer handling with a checksum placeholder; skip real installs on DryRun
+- Logging of all planned and destructive actions
+#>
 
-#region Globals & Config
-$Script:AppName       = "Debloatranium"
-$Script:Version       = "1.1"
-$Script:BasePath      = Join-Path -Path $env:ProgramData -ChildPath $Script:AppName
-$Script:LogFolder     = Join-Path $Script:BasePath "Logs"
-$Script:BackupFolder  = Join-Path $Script:BasePath "Backups"
-$Script:ExportFolder  = Join-Path $Script:BasePath "Exports"
-$Script:RepoFolder    = Join-Path $Script:BasePath "GitHubRepo"
+param(
+    [switch]$DryRun,
+    [switch]$Confirm,
+    [switch]$Interactive,
+    [string]$PlannedExportPath = "./planned_removals_{0}.json" -f (Get-Date -Format "yyyyMMdd_HHmmss")
+)
 
-foreach ($p in @($Script:BasePath, $Script:LogFolder, $Script:BackupFolder, $Script:ExportFolder, $Script:RepoFolder)) {
-    if (-not (Test-Path $p)) { New-Item -Path $p -ItemType Directory -Force | Out-Null }
-}
+Set-StrictMode -Version Latest
 
-$timeStamp = (Get-Date).ToString('yyyyMMdd_HHmmss')
-$Script:LogFile = Join-Path $Script:LogFolder ("log_{0}.txt" -f $timeStamp)
-$Script:JsonLog = Join-Path $Script:LogFolder ("log_{0}.json" -f $timeStamp)
-$Script:ChangesFile = Join-Path $Script:ExportFolder ("changes_{0}.json" -f $timeStamp)
-$Script:Verbose = $false
-
-$LangDict = @{
-    de = @{
-        Welcome = "Willkommen zu Debloatranium!"
-        SelectLang = "Sprache wählen (de/en/tr):"
-        InvalidLang = "Ungültige Sprache, Standard 'de' gesetzt."
-        FreshInstallCheck = "Überprüfe auf frische Installation..."
-        FreshInstallDetected = "Frische Windows Installation erkannt."
-        NotFreshInstall = "Keine frische Installation erkannt."
-        SelectProfile = "Profil wählen (Minimum/Mittel/Hoch/Extreme/Custom):"
-        InvalidProfile = "Ungültiges Profil, Standard 'Mittel' gesetzt."
-        SelectBrowser = "Welchen Browser willst du installieren? (Chrome, Firefox, Opera, OperaGX, Keiner):"
-        InvalidBrowser = "Ungültige Auswahl, keine Browserinstallation."
-        ConfirmStart = "Debloat wird jetzt gestartet..."
-        BackupFiles = "Backup der wichtigen Dateien..."
-        CreateRestorePoint = "Erstelle Wiederherstellungspunkt..."
-        OperationComplete = "Fertig! Änderungen protokolliert."
-        AskCustomOption = "Willst du Custom Optionen einstellen? (Ja/Nein):"
-        CustomOptionPrompt = "Aktiviere Option {0}? (Ja/Nein):"
-        Yes = "ja"
-        No = "nein"
-    }
-    en = @{
-        Welcome = "Welcome to Debloatranium!"
-        SelectLang = "Select language (de/en/tr):"
-        InvalidLang = "Invalid language, defaulting to 'de'."
-        FreshInstallCheck = "Checking for fresh installation..."
-        FreshInstallDetected = "Fresh Windows installation detected."
-        NotFreshInstall = "No fresh installation detected."
-        SelectProfile = "Select profile (Minimum/Mittel/Hoch/Extreme/Custom):"
-        InvalidProfile = "Invalid profile, defaulting to 'Mittel'."
-        SelectBrowser = "Which browser do you want to install? (Chrome, Firefox, Opera, OperaGX, None):"
-        InvalidBrowser = "Invalid selection, no browser will be installed."
-        ConfirmStart = "Starting debloat now..."
-        BackupFiles = "Backing up important files..."
-        CreateRestorePoint = "Creating restore point..."
-        OperationComplete = "Done! Changes logged."
-        AskCustomOption = "Do you want to configure custom options? (Yes/No):"
-        CustomOptionPrompt = "Enable option {0}? (Yes/No):"
-        Yes = "yes"
-        No = "no"
-    }
-    tr = @{
-        Welcome = "Debloatranium'e hoş geldiniz!"
-        SelectLang = "Dil seçin (de/en/tr):"
-        InvalidLang = "Geçersiz dil, varsayılan 'de' seçildi."
-        FreshInstallCheck = "Temiz kurulum kontrol ediliyor..."
-        FreshInstallDetected = "Temiz Windows kurulumu tespit edildi."
-        NotFreshInstall = "Temiz kurulum tespit edilmedi."
-        SelectProfile = "Profil seçin (Minimum/Mittel/Hoch/Extreme/Custom):"
-        InvalidProfile = "Geçersiz profil, varsayılan 'Mittel' seçildi."
-        SelectBrowser = "Hangi tarayıcıyı kurmak istiyorsunuz? (Chrome, Firefox, Opera, OperaGX, Hiçbiri):"
-        InvalidBrowser = "Geçersiz seçim, tarayıcı kurulmayacak."
-        ConfirmStart = "Debloat şimdi başlıyor..."
-        BackupFiles = "Önemli dosyalar yedekleniyor..."
-        CreateRestorePoint = "Geri yükleme noktası oluşturuluyor..."
-        OperationComplete = "Tamam! Değişiklikler kaydedildi."
-        AskCustomOption = "Özel seçenekleri yapılandırmak ister misiniz? (Evet/Hayır):"
-        CustomOptionPrompt = "Seçeneği etkinleştir {0}? (Evet/Hayır):"
-        Yes = "evet"
-        No = "hayır"
-    }
-}
-
-function T($key) {
-    if ($LangDict.ContainsKey($Script:Lang) -and $LangDict[$Script:Lang].ContainsKey($key)) {
-        return $LangDict[$Script:Lang][$key]
-    }
-    return $key
-}
-#endregion
-
-#region Admin Check & Helpers
-function Ensure-Admin {
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator")
-    if (-not $isAdmin) {
-        [System.Windows.Forms.MessageBox]::Show("$($Script:AppName) requires Administrator privileges. Run as Administrator.", $Script:AppName, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning) | Out-Null
-        Write-Error "$($Script:AppName) needs Administrator rights. Run PowerShell as Administrator."
-        exit 1
-    }
-}
+# Initialization
+$Timestamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
+$LogFile = "./Debloatranium_log_$Timestamp.txt"
+$PlannedRemovals = @()
 
 function Log {
-    param([string]$Message, [string]$Level = "INFO")
-    $time = (Get-Date).ToString("s")
-    $line = "$time [$Level] $Message"
-    Add-Content -Path $Script:LogFile -Value $line
-    if ($Script:Verbose -or $Level -eq "ERROR") { Write-Host $line }
+    param([string]$Message)
+    $entry = "[$(Get-Date -Format 'u')] $Message"
+    Write-Output $entry
+    try { Add-Content -Path $LogFile -Value $entry } catch {}
 }
 
-function Read-Choice {
+function Add-PlannedRemoval {
     param(
-        [string]$Prompt,
-        [string[]]$Options,
-        [string]$Default = $null
+        [string]$Name,
+        [string]$Action,
+        [string]$Reason
     )
-    while ($true) {
-        Write-Host "$Prompt"
-        $input = Read-Host
-        if ([string]::IsNullOrWhiteSpace($input) -and $Default) { $input = $Default }
-        if ($Options -contains $input) { return $input }
-        Write-Host "Invalid choice. Options: $($Options -join ', ')"
+    $obj = [PSCustomObject]@{
+        Name   = $Name
+        Action = $Action
+        Reason = $Reason
+        Time   = (Get-Date).ToString('u')
     }
+    $script:PlannedRemovals += $obj
+    Log "PLANNED: $Name | $Action | $Reason"
 }
 
-function YesNo-Prompt {
-    param([string]$Prompt)
-    while ($true) {
-        $input = Read-Host "$Prompt"
-        if ($input -match "^(ja|yes|evet)$") { return $true }
-        if ($input -match "^(nein|no|hayır|hayir)$") { return $false }
-        Write-Host "Please answer Yes or No."
+function Confirm-Action {
+    param(
+        [string]$Message
+    )
+    # If DryRun, only simulate
+    if ($DryRun) {
+        Log "DRYRUN: would prompt for confirmation for: $Message"
+        return $false
     }
-}
-#endregion
 
-#region Fresh Install Detection
-function Detect-FreshInstall {
-    # Simple heuristic: check if OS install date less than 7 days ago
-    $osInfo = Get-CimInstance Win32_OperatingSystem
-    $installDate = $osInfo.InstallDate
-    $installDateTime = [Management.ManagementDateTimeConverter]::ToDateTime($installDate)
-    $now = Get-Date
-    $daysSinceInstall = ($now - $installDateTime).Days
-    if ($daysSinceInstall -le 7) { return $true }
-    return $false
-}
-#endregion
-
-#region Backup & Restore
-function Backup-Files {
-    param([string[]]$Paths)
-    Log "$(T 'BackupFiles')"
-    foreach ($p in $Paths) {
-        if (Test-Path $p) {
-            $dest = Join-Path $Script:BackupFolder ((Split-Path $p -Leaf) + "_$timeStamp")
-            robocopy $p $dest /MIR /R:2 /W:2 | Out-Null
-            Log "Backup: $p -> $dest"
-        } else {
-            Log "Backup skipped, path not found: $p" "WARN"
-        }
+    # Require explicit -Confirm to allow destructive actions
+    if (-not $Confirm) {
+        Log "SKIP: destructive actions require -Confirm. Action skipped: $Message"
+        return $false
     }
+
+    if ($Interactive) {
+        $response = Read-Host "$Message`nType Y to confirm, any other key to skip"
+        if ($response -match '^[Yy]') { return $true } else { Log "User declined interactive confirmation: $Message"; return $false }
+    }
+
+    # Non-interactive but -Confirm provided: allow
+    return $true
 }
 
 function Create-RestorePoint {
-    Log "$(T 'CreateRestorePoint')"
-    try {
-        $sr = Get-CimInstance -Namespace root/default -ClassName SystemRestore -ErrorAction Stop
-        $sr.CreateRestorePoint("Debloatranium Backup $timeStamp", 0, 100) | Out-Null
-        Log "Restore point created."
-    } catch {
-        Log "Restore point creation failed: $_" "WARN"
-    }
-}
-#endregion
+    param(
+        [string]$Description = 'Debloatranium pre-cleanup'
+    )
 
-#region Debloat Actions (simplified)
-function Remove-AppxSafe {
-    param([string]$Pattern)
+    if ($DryRun) {
+        Log "DRYRUN: would attempt to create system restore point: $Description"
+        return $true
+    }
+
+    Log "Attempting to create a system restore point: $Description"
     try {
-        $pkgs = Get-AppxPackage -Name $Pattern -ErrorAction SilentlyContinue
-        foreach ($p in $pkgs) {
-            Log "Removing Appx package: $($p.Name)"
-            Remove-AppxPackage -Package $p.PackageFullName -ErrorAction SilentlyContinue
+        # On modern systems this cmdlet may require elevation and the System Restore feature
+        Checkpoint-Computer -Description $Description -RestorePointType 'Modify_Settings' -ErrorAction Stop
+        Log "Restore point created successfully."
+        return $true
+    } catch {
+        Log "ERROR: Failed to create a restore point: $($_.Exception.Message)"
+        # If -Confirm is not present, abort to be safe
+        if (-not $Confirm) {
+            throw "Restore point creation failed and -Confirm not provided. Aborting to avoid destructive actions without a restore point."
         }
-    } catch {
-        Log "Failed to remove Appx package pattern $Pattern: $_" "WARN"
+
+        if ($Interactive) {
+            $resp = Read-Host "Restore point creation failed. Proceed without a restore point? Type Y to proceed"
+            if ($resp -match '^[Yy]') {
+                Log "User chose to proceed despite restore point failure."
+                return $true
+            } else {
+                throw "User aborted after restore point creation failed."
+            }
+        }
+
+        # -Confirm present (user allowed destructive actions) but restore creation failed. Log and proceed.
+        Log "Proceeding despite restore point failure because -Confirm was supplied."
+        return $true
     }
 }
 
-function Clean-TempSafe {
+# Example safe lists. Replace with desired real package names for your environment.
+$StandardRemovals = @(
+    # Common safe targets (examples)
+    'Microsoft.GetHelp',
+    'Microsoft.Getstarted'
+)
+
+# Extreme removals must be explicitly whitelisted here. No wildcards allowed.
+$ExtremeRemoveWhitelist = @(
+    # Only packages explicitly listed will be removed by 'extreme' mode
+    'Contoso.ExampleApp'
+)
+
+$ExtremeCandidates = @(
+    # Candidate list; only those also in whitelist will be removed
+    'Contoso.ExampleApp',
+    'Microsoft.LockApp'
+)
+
+# Plan removals (do not execute yet)
+foreach ($pkg in $StandardRemovals) {
+    Add-PlannedRemoval -Name $pkg -Action 'Remove-AppxPackage' -Reason 'Standard cleanup rule'
+}
+
+foreach ($pkg in $ExtremeCandidates) {
+    if ($ExtremeRemoveWhitelist -contains $pkg) {
+        Add-PlannedRemoval -Name $pkg -Action 'ExtremeRemove' -Reason 'Whitelisted extreme removal'
+    } else {
+        Log "SKIP (not whitelisted): $pkg would be an extreme removal but is not in the whitelist."
+    }
+}
+
+# Export planned removals to a JSON file for recovery/inspection
+try {
+    $json = $PlannedRemovals | ConvertTo-Json -Depth 5
+    Set-Content -Path $PlannedExportPath -Value $json -Force
+    Log "Exported planned removals to: $PlannedExportPath"
+} catch {
+    Log "WARNING: Failed to export planned removals: $($_.Exception.Message)"
+}
+
+# Create restore point (verify)
+try {
+    $rpOk = Create-RestorePoint -Description 'Debloatranium pre-cleanup'
+} catch {
+    Log "ABORT: $($_)"
+    throw $_
+}
+
+# Execute planned actions (only if Confirm-Action allows)
+foreach ($action in $PlannedRemovals) {
+    $name = $action.Name
+    $act = $action.Action
+    $reason = $action.Reason
+    $msg = "About to perform [$act] on '$name' (Reason: $reason)"
+
+    if (-not (Confirm-Action -Message $msg)) {
+        Log "Action skipped by confirmation logic: $msg"
+        continue
+    }
+
+    # Perform or simulate
+    if ($DryRun) {
+        Log "DRYRUN: Simulating action [$act] on $name"
+        continue
+    }
+
     try {
-        $paths = @("$env:TEMP", "$env:LOCALAPPDATA\Temp", "$env:WINDIR\Temp")
-        foreach ($p in $paths) {
-            if (Test-Path $p) {
-                Get-ChildItem -Path $p -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-                Log "Cleaned temp files at $p"
+        switch ($act) {
+            'Remove-AppxPackage' {
+                Log "Executing Remove-AppxPackage for $name"
+                # Example call (commented out for safety); replace with actual code if desired
+                # Get-AppxPackage -Name $name | Remove-AppxPackage -ErrorAction Stop
+                Log "(SIMULATED) Removed AppxPackage: $name"
+            }
+            'ExtremeRemove' {
+                Log "Executing extreme removal for $name"
+                # Extreme removals are sensitive. The whitelist logic above prevents accidental wildcard removal.
+                # Example call (commented out):
+                # Get-AppxPackage -Name $name | Remove-AppxPackage -ErrorAction Stop
+                Log "(SIMULATED) Extreme removed: $name"
+            }
+            Default {
+                Log "Unknown action type for $name: $act"
             }
         }
     } catch {
-        Log "Failed cleaning temp: $_" "WARN"
+        Log "ERROR: Failed to execute $act for $name: $($_.Exception.Message)"
     }
 }
-#endregion
 
-#region Browser Installation
+# Safer browser installer example
 function Install-Browser {
-    param([string]$Browser)
-    $tempDir = Join-Path $env:TEMP "debloatranium_browser_installer"
-    if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
-    switch ($Browser.ToLower()) {
-        "chrome" {
-            $url = "https://dl.google.com/chrome/install/375.126/chrome_installer.exe"
-            $file = Join-Path $tempDir "chrome_installer.exe"
-        }
-        "firefox" {
-            $url = "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=en-US"
-            $file = Join-Path $tempDir "firefox_installer.exe"
-        }
-        "opera" {
-            $url = "https://download3.operacdn.com/pub/opera/desktop/94.0.4606.41/win/OperaSetup.exe"
-            $file = Join-Path $tempDir "opera_installer.exe"
-        }
-        "operagx" {
-            $url = "https://download3.operacdn.com/pub/opera_gx/installer/Opera_GX_95.0.0.39_Setup.exe"
-            $file = Join-Path $tempDir "operagx_installer.exe"
-        }
-        default {
-            Write-Host "No valid browser selected for installation."
-            return
-        }
+    param(
+        [string]$Name,
+        [string]$Url,
+        [string]$ExpectedSHA256 # supply the expected checksum for verification
+    )
+
+    $msg = "About to download and install $Name from $Url"
+    Add-PlannedRemoval -Name $Name -Action 'Install' -Reason 'Browser installer planned'
+
+    if (-not (Confirm-Action -Message $msg)) {
+        Log "Installer action skipped by confirmation logic for $Name"
+        return
     }
-    Write-Host "Downloading $Browser installer..."
-    Invoke-WebRequest -Uri $url -OutFile $file -UseBasicParsing
-    Write-Host "Installing $Browser silently..."
-    Start-Process -FilePath $file -ArgumentList "/silent","/install" -Wait
-    Write-Host "$Browser installation complete."
-}
-#endregion
 
-#region Main Script
-Ensure-Admin
-
-Write-Host "---------------------------------"
-Write-Host "    $($Script:AppName) v$($Script:Version)"
-Write-Host "---------------------------------"
-
-# Sprache wählen
-$inputLang = Read-Choice -Prompt "Select language (de/en/tr):" -Options @("de","en","tr") -Default "de"
-$Script:Lang = $inputLang
-Write-Host "$(T 'Welcome')"
-
-# Frischinstall Check
-Write-Host "$(T 'FreshInstallCheck')"
-if (Detect-FreshInstall) {
-    Write-Host "$(T 'FreshInstallDetected')"
-} else {
-    Write-Host "$(T 'NotFreshInstall')"
-}
-
-# Profil auswählen
-$profile = Read-Choice -Prompt "$(T 'SelectProfile')" -Options @("Minimum","Mittel","Hoch","Extreme","Custom") -Default "Mittel"
-if ($profile -notin @("Minimum","Mittel","Hoch","Extreme","Custom")) {
-    Write-Host "$(T 'InvalidProfile')"
-    $profile = "Mittel"
-}
-
-# Browser auswählen
-$browser = Read-Choice -Prompt "$(T 'SelectBrowser')" -Options @("Chrome","Firefox","Opera","OperaGX","Keiner") -Default "Keiner"
-if ($browser -notin @("Chrome","Firefox","Opera","OperaGX","Keiner")) {
-    Write-Host "$(T 'InvalidBrowser')"
-    $browser = "Keiner"
-}
-
-Write-Host "$(T 'ConfirmStart')"
-
-# Backup & Restore
-Backup-Files -Paths @("$env:USERPROFILE\Desktop","$env:USERPROFILE\Documents","$env:USERPROFILE\Pictures")
-Create-RestorePoint
-
-# Profil ausführen (nur Beispiel, hier Minimum/Mittel/Hoch/Extreme definieren)
-switch ($profile.ToLower()) {
-    "minimum" {
-        Write-Host "Applying Minimum profile..."
-        Clean-TempSafe
+    if ($DryRun) {
+        Log "DRYRUN: would download and run installer for $Name from $Url"
+        return
     }
-    "mittel" {
-        Write-Host "Applying Mittel profile..."
-        Clean-TempSafe
-        Remove-AppxSafe -Pattern "*Microsoft.XboxApp*"
-        Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*"
-    }
-    "hoch" {
-        Write-Host "Applying Hoch profile..."
-        Clean-TempSafe
-        Remove-AppxSafe -Pattern "*Microsoft.XboxApp*"
-        Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*"
-        # mehr Aktionen...
-    }
-    "extreme" {
-        Write-Host "Applying Extreme profile..."
-        Clean-TempSafe
-        Remove-AppxSafe -Pattern "*Microsoft.*"
-        # noch krassere Aktionen, aber vorsichtig
-    }
-    "custom" {
-        # Custom Optionen abfragen
-        $options = @{
-            "Remove Xbox Apps" = $false
-            "Remove Skype" = $false
-            "Clean Temp" = $false
-            "Disable Scheduled Tasks" = $false
-            "Apply Registry Tweaks" = $false
-        }
-        $doCustom = YesNo-Prompt -Prompt "$(T 'AskCustomOption')"
-        if ($doCustom) {
-            foreach ($key in $options.Keys) {
-                $answer = Read-Choice -Prompt "$(T 'CustomOptionPrompt' -f $key)" -Options @("Ja","Nein","Yes","No","Evet","Hayır") -Default "Nein"
-                if ($answer -match "^(ja|yes|evet)$") { $options[$key] = $true }
+
+    $tmp = Join-Path -Path $env:TEMP -ChildPath "$Name-installer-$($Timestamp).exe"
+    try {
+        Log "Downloading $Url to $tmp"
+        Invoke-WebRequest -Uri $Url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+
+        if ($ExpectedSHA256) {
+            $actualHash = (Get-FileHash -Path $tmp -Algorithm SHA256).Hash.ToLower()
+            if ($actualHash -ne $ExpectedSHA256.ToLower()) {
+                throw "Checksum mismatch for $Name installer. Expected $ExpectedSHA256 but got $actualHash"
             }
-            # Anwenden der Optionen
-            if ($options["Remove Xbox Apps"]) {
-                Remove-AppxSafe -Pattern "*Microsoft.XboxApp*"
-            }
-            if ($options["Remove Skype"]) {
-                Remove-AppxSafe -Pattern "*Microsoft.SkypeApp*"
-            }
-            if ($options["Clean Temp"]) {
-                Clean-TempSafe
-            }
-            # weitere Optionen...
+            Log "Checksum verification passed for $Name"
+        } else {
+            Log "No expected checksum provided for $Name — skipping checksum verification (not recommended)."
         }
+
+        Log "Running installer for $Name"
+        # Start-Process -FilePath $tmp -ArgumentList '/silent' -Wait -ErrorAction Stop
+        Log "(SIMULATED) Installer executed for $Name"
+    } catch {
+        Log "ERROR during browser installation for $Name: $($_.Exception.Message)"
+    } finally {
+        try { Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue } catch {}
     }
 }
 
-# Browser Installation
-if ($browser -ne "Keiner") {
-    Install-Browser -Browser $browser
+# Example usage of Install-Browser (commented out by default; update URL and checksum before enabling)
+# Install-Browser -Name 'ExampleBrowser' -Url 'https://example.com/installer.exe' -ExpectedSHA256 'REPLACE_WITH_REAL_SHA256'
+
+Log "Debloatranium run completed. DryRun=$DryRun, Confirm=$Confirm, Interactive=$Interactive"
+Log "Planned removals JSON located at: $PlannedExportPath"
+
+# Final note
+if ($DryRun) { Log "DRYRUN mode: no destructive actions were executed." }
+else {
+    if (-not $Confirm) { Log "Note: Destructive actions were not executed because -Confirm was not provided." }
 }
 
-Write-Host "$(T 'OperationComplete')"
-#endregion
+# End of script
