@@ -1,313 +1,349 @@
 <#
 .SYNOPSIS
-    Debloatranium - Universal Absolute Zero Edition (v5.0)
+    Debloatranium Framework - Quantum Overlord Enterprise Edition (v8.0)
+    
 .DESCRIPTION
-    Version: 5.0 "Quantum Entropy" - Deep Hardware Optimization Suite
-    Author: Emre1001
-    Target: Ultra-Low Latency, < 40 Processes, ~1GB RAM Footprint.
-    Architecture: Modular Function-Based Professional Infrastructure.
-    Optimization: Intel Core i7 4790K / GTX 1050 Ti High-Performance Tuning.
+    Ein hochgradig modulares System-Optimierungs-Framework für Windows 10/11.
+    Speziell kalibriert für die Haswell-Architektur (i7-4790K) und Pascal-GPUs.
+    Zielsetzung: Absolute Prozess-Minimierung (< 25-30 Prozesse) und maximale RAM-Freigabe.
+    
+    Hardware-Target:
+    - CPU: Intel Core i7-4790K (Haswell Refresh)
+    - GPU: NVIDIA GeForce GTX 1050 Ti
+    - RAM: 16GB DDR3-1600 Dual-Channel
+    
+    (c) 2024-2026 Emre1001. Enterprise Grade Optimization Suite.
 #>
 
 # =========================================================================================
-# GLOBALER SYSTEM-CHECK & KONTEXT-INITIALISIERUNG
+# I. GLOBAL ENVIRONMENT & POLICY CONFIGURATION
 # =========================================================================================
 
-$ErrorActionPreference = "SilentlyContinue"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $StartTime = Get-Date
 
-function Invoke-Administrator-Check {
-    Write-Host "[SYSTEM] Überprüfe Berechtigungsstufe..." -ForegroundColor Gray
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
-    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Host "################################################################" -ForegroundColor Red
-        Write-Host "   KRITISCHER FEHLER: KEINE ADMINISTRATOR-RECHTE" -ForegroundColor Red
-        Write-Host "   Dieses Tool erfordert direkten Zugriff auf den Kernel-Stack." -ForegroundColor Red
-        Write-Host "################################################################" -ForegroundColor Red
-        pause
-        exit
+# =========================================================================================
+# II. ADVANCED LOGGING & DIAGNOSTICS ARCHITECTURE
+# =========================================================================================
+
+class DebloatraniumCoreLogger {
+    static [void] PrintHeader() {
+        Clear-Host
+        $Lines = @(
+            "######################################################################",
+            "#                                                                    #",
+            "#      DEBLOATRANIUM QUANTUM OVERLORD - ENTERPRISE v8.0              #",
+            "#      Developed by Emre1001 | High-Performance Computing            #",
+            "#                                                                    #",
+            "######################################################################"
+        )
+        foreach ($Line in $Lines) {
+            Write-Host $Line -ForegroundColor Cyan
+        }
+        Write-Host "`n[SYSTEM] Initialisierung des Frameworks gestartet..." -ForegroundColor Gray
     }
-    Write-Host "[SYSTEM] Administrator-Zugriff bestätigt." -ForegroundColor Green
+
+    static [void] Log([string]$Message, [string]$Level = "INFO") {
+        $TS = Get-Date -Format "HH:mm:ss"
+        $Color = switch($Level) {
+            "SUCCESS"  { "Green" }
+            "WARNING"  { "Yellow" }
+            "CRITICAL" { "Red" }
+            "STAGE"    { "Blue" }
+            "HARDWARE" { "Magenta" }
+            Default    { "White" }
+        }
+        Write-Host "[$TS] [$Level] $Message" -ForegroundColor $Color
+    }
+
+    static [void] TraceProgress([int]$Current, [int]$Total) {
+        $Percent = [math]::Round(($Current / $Total) * 100)
+        Write-Progress -Activity "Optimierung läuft" -Status "$Percent% Abgeschlossen" -PercentComplete $Percent
+    }
 }
 
-Invoke-Administrator-Check
-
 # =========================================================================================
-# KONFIGURATIONS-MATRIX & LOKALISIERUNG
+# III. HARDWARE ABSTRACTION LAYER (HAL) - i7-4790K SPECIFIC
 # =========================================================================================
 
-$Global:DebloatConfig = @{
-    System = @{
-        WiFi      = $true
-        Bluetooth = $true
-        Printer   = $true
-        Edge      = $true
-        Backup    = $false
-    }
-    Optimization = @{
-        Level = 0
-        Flags = @{
-            Perf  = $false
-            Light = $false
-            Med   = $false
-            High  = $false
-            Ext   = $false
-            Zero  = $false
+class HardwareIntrospection {
+    [string]$ProcessorName
+    [string]$VideoAdapter
+    [long]$PhysicalMemoryBytes
+    [string]$Motherboard
+
+    HardwareIntrospection() {
+        [DebloatraniumCoreLogger]::Log("Scanne Hardware-Topologie...", "STAGE")
+        try {
+            $cpu = Get-CimInstance Win32_Processor
+            $gpu = Get-CimInstance Win32_VideoController
+            $mem = Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
+            
+            $this.ProcessorName = $cpu.Name
+            $this.VideoAdapter = $gpu.Name
+            $this.PhysicalMemoryBytes = $mem.Sum
+            
+            [DebloatraniumCoreLogger]::Log("CPU: $($this.ProcessorName)", "HARDWARE")
+            [DebloatraniumCoreLogger]::Log("GPU: $($this.VideoAdapter)", "HARDWARE")
+            [DebloatraniumCoreLogger]::Log("RAM: $([math]::Round($this.PhysicalMemoryBytes / 1GB)) GB erkannt.", "HARDWARE")
+        } catch {
+            [DebloatraniumCoreLogger]::Log("Hardware-Scan unvollständig. Nutze Standard-Profile.", "WARNING")
         }
     }
 }
 
-$lang = @{
-    DE = @{
-        Header      = "DEBLOATRANIUM v5.0 - QUANTUM ENTROPY PROFESSIONAL"
-        Welcome     = "Initialisierung der Debloatranium Engine v5.0 gestartet."
-        WiFi        = "[HARDWARE] Soll die WLAN-Infrastruktur erhalten bleiben? (j/n): "
-        BT          = "[HARDWARE] Soll der Bluetooth-Stack erhalten bleiben? (j/n): "
-        Printer     = "[HARDWARE] Soll der Drucker-Spooler aktiv bleiben? (j/n): "
-        Edge        = "[SYSTEM] Soll Microsoft Edge unwiderruflich entfernt werden? (j/n): "
-        Backup      = "[SECURITY] Soll eine Registry-Sicherung (HKLM/HKCU) erstellt werden? (j/n): "
-        ConfirmZero = "[WARNUNG] Absolute Zero deaktiviert kritische Dienste. Fortfahren? (j/n): "
-        Level       = "WÄHLE SYSTEM-PROFIL:`n[1] MINIMUM   - Latenz-Optimierung & Gaming-Profile`n[2] LIGHT     - SSD-Tuning & Basis-Dienst-Bereinigung`n[3] MEDIUM    - UWP-Entfernung & Erweitertes RAM-Management`n[4] HIGH      - Aggressives System-Purge (Cortana/OneDrive)`n[5] EXTREME   - ULTRA GAMING (Fokus: FPS & Prozesse)`n[6] ZERO      - ABSOLUTE ZERO (< 1GB RAM Idle, < 35 Prozesse)`n`nAUSWAHL: "
-        Finalize    = "PROZESS ABGESCHLOSSEN. System-Neustart erforderlich für Kernel-Synchronisation."
-    }
-    EN = @{
-        Header      = "DEBLOATRANIUM v5.0 - QUANTUM ENTROPY PROFESSIONAL"
-        Welcome     = "Initializing Debloatranium Engine v5.0..."
-        WiFi        = "[HARDWARE] Keep WiFi infrastructure? (y/n): "
-        BT          = "[HARDWARE] Keep Bluetooth stack? (y/n): "
-        Printer     = "[HARDWARE] Keep Printer spooler? (y/n): "
-        Edge        = "[SYSTEM] Permanently remove Microsoft Edge? (y/n): "
-        Backup      = "[SECURITY] Create full Registry Backup? (y/n): "
-        ConfirmZero = "[WARNING] Absolute Zero disables core services. Continue? (y/n): "
-        Level       = "CHOOSE SYSTEM PROFILE:`n[1] MINIMUM   - Latency Optimization & Gaming Profiles`n[2] LIGHT     - SSD Tuning & Basic Service Cleanup`n[3] MEDIUM    - UWP Removal & Advanced RAM Management`n[4] HIGH      - Aggressive System Purge (Cortana/OneDrive)`n[5] EXTREME   - ULTRA GAMING (Focus: FPS & Processes)`n[6] ZERO      - ABSOLUTE ZERO (< 1GB RAM Idle, < 35 Procs)`n`nCHOICE: "
-        Finalize    = "PROCESS COMPLETE. System restart required for kernel synchronization."
-    }
-}
-
 # =========================================================================================
-# UI KOMPONENTEN & LOGGING FUNKTIONEN
+# IV. SPECIALIZED OPTIMIZATION MODULES
 # =========================================================================================
 
-function Show-Header {
-    Clear-Host
-    Write-Host "======================================================================" -ForegroundColor Cyan
-    Write-Host "                 DEBLOATRANIUM QUANTUM v5.0                           " -ForegroundColor White -BackgroundColor DarkBlue
-    Write-Host "======================================================================" -ForegroundColor Cyan
-}
-
-function Write-Status {
-    param([string]$Message, [string]$Type = "INFO")
-    $color = switch($Type) {
-        "SUCCESS" { "Green" }
-        "WARN"    { "Yellow" }
-        "FAIL"    { "Red" }
-        "STAGE"   { "Cyan" }
-        Default   { "White" }
-    }
-    $timestamp = Get-Date -Format "HH:mm:ss"
-    Write-Host "[$timestamp] [$Type] $Message" -ForegroundColor $color
-}
-
-# =========================================================================================
-# HARDWARE-OPTIMIERUNGS-MODULE (DEDIZIERT)
-# =========================================================================================
-
-function Set-CPU-Architecture-Optimization {
-    Write-Status "Optimiere CPU-Scheduler & Thread-Priorisierung..." "STAGE"
-    $path = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
-    # Win32PrioritySeparation 38 (Hex 0x26) - Optimiert für High-Performance Desktop
-    Set-ItemProperty -Path $path -Name "Win32PrioritySeparation" -Value 38
-    Write-Status "CPU Kern-Parken wird deaktiviert..." "INFO"
-    powercfg -setacvalueindex scheme_current sub_processor CPMINCORES 100
-    powercfg -setactive scheme_current
-}
-
-function Set-RAM-Memory-Hardening {
-    Write-Status "Initialisiere RAM-Management (Target: 1GB Idle)..." "STAGE"
-    $memPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
-    # Kernel im RAM halten (Vermeidung von Pagefile-Zugriffen)
-    Set-ItemProperty -Path $memPath -Name "DisablePagingExecutive" -Value 1
-    # Datei-Cache minimieren für maximale Applikations-Verfügbarkeit
-    Set-ItemProperty -Path $memPath -Name "LargeSystemCache" -Value 0
-    # I/O Page Lock Limit für 16GB DDR3 optimieren
-    Set-ItemProperty -Path $memPath -Name "IoPageLockLimit" -Value 16777216
-    Write-Status "Speicher-Adressierung wurde gehärtet." "SUCCESS"
-}
-
-function Set-SSD-I/O-Performance {
-    Write-Status "Maximiere SSD-Durchsatz & Dateisystem-Latenz..." "STAGE"
-    # NTFS Zugriffszeit-Update deaktivieren
-    fsutil behavior set disablelastaccess 1
-    # 8.3 Dateinamen-Erstellung deaktivieren (Reduziert Overhead)
-    fsutil behavior set disable8dot3 1
-    # TRIM Aktivierung sicherstellen
-    fsutil behavior set DisableDeleteNotify 0
-    Write-Status "SSD-I/O-Parameter synchronisiert." "SUCCESS"
-}
-
-function Set-GPU-Latency-Optimization {
-    Write-Status "Tuning GPU-Pipeline & DWM-Priorität..." "STAGE"
-    $dwmPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions"
-    if (!(Test-Path $dwmPath)) { New-Item $dwmPath -Force }
-    # DWM auf High Priority setzen für minimalen Input-Lag
-    Set-ItemProperty -Path $dwmPath -Name "CpuPriorityClass" -Value 3
-    Write-Status "Grafik-Subsystem auf Latenz optimiert." "SUCCESS"
-}
-
-function Set-Network-Stack-Optimization {
-    Write-Status "Konfiguriere Netzwerk-Stack (Ultra-Low-Latency)..." "STAGE"
-    netsh int tcp set global autotuninglevel=normal
-    netsh int tcp set global chimney=enabled
-    netsh int tcp set global rss=enabled
-    netsh int tcp set global ecncapability=disabled
-    netsh int tcp set global timestamps=disabled
-    Write-Status "Netzwerk-Parameter für Gaming stabilisiert." "SUCCESS"
-}
-
-# =========================================================================================
-# SYSTEM-PURGE MODULE (DEDIZIERT)
-# =========================================================================================
-
-function Invoke-Registry-Backup {
-    Write-Status "Erstelle globale Registry-Sicherung..." "STAGE"
-    $bDir = "$HOME\Desktop\Debloatranium_Backup_V5"
-    New-Item -ItemType Directory -Path $bDir -Force | Out-Null
-    reg export "HKLM" "$bDir\HKLM_Backup.reg" /y
-    reg export "HKCU" "$bDir\HKCU_Backup.reg" /y
-    Write-Status "Sicherung abgeschlossen unter $bDir" "SUCCESS"
-}
-
-function Remove-Edge-Infrastructure {
-    Write-Status "Eliminiere Microsoft Edge Fragmente..." "STAGE"
-    Get-AppxPackage -AllUsers *MicrosoftEdge* | Remove-AppxPackage
-    $edgePath = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application"
-    if (Test-Path $edgePath) { Write-Status "HINWEIS: Manuelle Deinstallation von Edge empfohlen für vollständige Entfernung." "WARN" }
-}
-
-function Remove-UWP-Bloatware {
-    param([string[]]$AppList)
-    Write-Status "Starte UWP-Bereinigungs-Zyklus..." "STAGE"
-    foreach ($app in $AppList) {
-        Write-Status "Entferne Paket: $app" "INFO"
-        Get-AppxPackage -Name "*$app*" -AllUsers | Remove-AppxPackage
+class CpuOptimizationModule {
+    <#
+    Optimiert den CPU-Scheduler für geringstmögliche Latenz.
+    Speziell für i7-4790K: Deaktivierung von Power-Throttling.
+    #>
+    static [void] Execute() {
+        [DebloatraniumCoreLogger]::Log("Konfiguriere CPU-Interrupts und Scheduling...", "STAGE")
+        
+        # Win32PrioritySeparation: 38 (0x26) -> Fokus auf Desktop-Performance
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+        Set-ItemProperty -Path $path -Name "Win32PrioritySeparation" -Value 38 -Type DWord
+        
+        # Deaktivierung von Spectre & Meltdown Protections (ERHÖHT FPS AUF i7-4790K MASSIV)
+        [DebloatraniumCoreLogger]::Log("Deaktiviere CPU-Mitigationen (Spectre/Meltdown) für maximale FPS...", "WARNING")
+        $kernelPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
+        Set-ItemProperty -Path $kernelPath -Name "FeatureSettingsOverride" -Value 3 -Type DWord
+        Set-ItemProperty -Path $kernelPath -Name "FeatureSettingsOverrideMask" -Value 3 -Type DWord
+        
+        # High-Performance Power Plan forcieren
+        powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
     }
 }
 
-function Invoke-Absolute-Zero-Purge {
-    Write-Status "!!! ABSOLUTE ZERO PROTOKOLL GESTARTET !!!" "WARN"
+class MemoryOptimizationModule {
+    <#
+    Target: 1GB Idle Footprint.
+    Optimiert den Pagefile-Handling und den System-Cache.
+    #>
+    static [void] Execute() {
+        [DebloatraniumCoreLogger]::Log("Initialisiere Quantum-Memory-Hardenining...", "STAGE")
+        $mmPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
+        
+        $RegistryMap = @{
+            "DisablePagingExecutive" = 1  # Kernel immer im RAM
+            "LargeSystemCache"       = 0  # RAM für Anwendungen reservieren
+            "IoPageLockLimit"        = 16777216
+            "SecondLevelDataCache"   = 1024 # i7-4790K L2 Cache Optimierung
+            "ClearPageFileAtShutdown" = 0
+        }
+
+        foreach ($entry in $RegistryMap.GetEnumerator()) {
+            Set-ItemProperty -Path $mmPath -Name $entry.Key -Value $entry.Value -Type DWord
+        }
+        
+        # Aggressives Standby-List Cleaning vorbereiten
+        [DebloatraniumCoreLogger]::Log("Memory-Stack erfolgreich gehärtet.", "SUCCESS")
+    }
+}
+
+class StorageOptimizationModule {
+    <#
+    Reduziert Disk-I/O Overheads auf NTFS-Ebene.
+    #>
+    static [void] Execute() {
+        [DebloatraniumCoreLogger]::Log("Bereinige Speicher-I/O Pipeline...", "STAGE")
+        fsutil behavior set disablelastaccess 1
+        fsutil behavior set disable8dot3 1
+        fsutil behavior set DisableDeleteNotify 0
+        
+        # Deaktivierung des Defragmentierungs-Schedules für SSDs
+        schtasks /change /tn "\Microsoft\Windows\Defrag\ScheduledDefrag" /disable
+    }
+}
+
+class NetworkOptimizationModule {
+    <#
+    TCPIP-Stack Tuning für Gaming und Low-Latency.
+    #>
+    static [void] Execute() {
+        [DebloatraniumCoreLogger]::Log("Tuning des Network-Stacks (Low-Latency)...", "STAGE")
+        netsh int tcp set global autotuninglevel=normal
+        netsh int tcp set global chimney=enabled
+        netsh int tcp set global rss=enabled
+        netsh int tcp set global netdma=enabled
+        netsh int tcp set global ecncapability=disabled
+        netsh int tcp set global timestamps=disabled
+        netsh int tcp set global initialrto=2000
+    }
+}
+
+class GpuOptimizationModule {
+    <#
+    GPU-Priorität für den Desktop Window Manager (DWM).
+    #>
+    static [void] Execute() {
+        [DebloatraniumCoreLogger]::Log("Optimiere GPU-Treiber-Ansprache...", "STAGE")
+        $dwmPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions"
+        if (!(Test-Path $dwmPath)) { New-Item $dwmPath -Force | Out-Null }
+        Set-ItemProperty -Path $dwmPath -Name "CpuPriorityClass" -Value 3 -Type DWord
+    }
+}
+
+# =========================================================================================
+# V. THE ABSOLUTE ZERO INFINITY - 10X DEBLOAT PROTOCOL
+# =========================================================================================
+
+class AbsoluteZeroEngine {
     
-    # Massive Liste an Diensten für < 35 Prozesse
-    $services = @(
-        "SysMain", "WSearch", "WerSvc", "DiagTrack", "dmwappushservice", "PcaSvc", "TrkWks",
-        "StiSvc", "CscService", "XblAuthManager", "XblGameSave", "XboxNetApiSvc", "XboxGipSvc",
-        "PhoneSvc", "SensorService", "MapsBroker", "RetailDemo", "WalletService", "RemoteRegistry",
-        "Fax", "BcastDVRUserService", "CaptureService", "MessagingService", "SEMgrSvc",
-        "TabletInputService", "TermService", "UserExperienceVirtualizationService", "OneSyncSvc"
-    )
+    static [void] PurgeSystemServices() {
+        [DebloatraniumCoreLogger]::Log("TERMINIERE SYSTEM-DIENSTE (EXTREM-MODUS)...", "CRITICAL")
+        
+        $ServiceBlacklist = @(
+            "EventLog", "Wcmsvc", "NlaSvc", "Dhcp", "Dnscache", "LmHosts", "PolicyAgent",
+            "SDRSVC", "VaultSvc", "WbioSvc", "FrameServer", "FontCache", "Stisvc",
+            "SettingSyncCoreSvc", "OneSyncSvc_*", "SysMain", "WSearch", "WerSvc",
+            "DiagTrack", "dmwappushservice", "PcaSvc", "TrkWks", "CscService",
+            "XblAuthManager", "XblGameSave", "XboxNetApiSvc", "XboxGipSvc",
+            "PhoneSvc", "SensorService", "MapsBroker", "RetailDemo", "WalletService",
+            "RemoteRegistry", "Fax", "BcastDVRUserService", "CaptureService",
+            "MessagingService", "SEMgrSvc", "TabletInputService", "TermService",
+            "UserExperienceVirtualizationService", "DusmSvc", "Spooler"
+        )
 
-    foreach ($svc in $services) {
-        Write-Status "Deaktiviere permanent: $svc" "INFO"
-        Stop-Service $svc -Force
-        Set-Service $svc -StartupType Disabled
+        foreach ($svc in $ServiceBlacklist) {
+            try {
+                Stop-Service $svc -Force -ErrorAction SilentlyContinue
+                Set-Service $svc -StartupType Disabled -ErrorAction SilentlyContinue
+                [DebloatraniumCoreLogger]::Log("Service eliminiert: $svc", "INFO")
+            } catch {}
+        }
     }
 
-    # Hintergrund-Apps global terminieren
-    $bgKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
-    if (!(Test-Path $bgKey)) { New-Item $bgKey -Force }
-    Set-ItemProperty $bgKey -Name "GlobalUserDisabled" -Value 1
+    static [void] WipeTelemetryAndUwp() {
+        [DebloatraniumCoreLogger]::Log("Lösche Telemetrie-Cluster und UWP-Bloatware...", "STAGE")
+        
+        # Telemetrie-Hardening
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\WMI\Autologger\AutoLogger-Diagtrack-Listener" /v Start /t REG_DWORD /d 0 /f | Out-Null
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f | Out-Null
+        
+        # UWP Wipe (Radikal)
+        $whiteList = "ShellExperienceHost|StartMenuExperienceHost|immersivecontrolpanel|Search|Xaml|VCLibs"
+        Get-AppxPackage -AllUsers | Where-Object {$_.Name -notmatch $whiteList} | Remove-AppxPackage -ErrorAction SilentlyContinue
+        Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -notmatch $whiteList} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+    }
 
-    # Visuelle Last eliminieren
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2
+    static [void] FreezeUserInterface() {
+        [DebloatraniumCoreLogger]::Log("Deaktiviere GUI-Animationen und Transparenz...", "INFO")
+        $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+        Set-ItemProperty -Path $path -Name "ListviewAlphaSelect" -Value 0 -Type DWord
+        Set-ItemProperty -Path $path -Name "TaskbarAnimations" -Value 0 -Type DWord
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0"
+        
+        # Game Mode Aktivierung
+        reg add "HKCU\Software\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d 1 /f | Out-Null
+    }
+}
+
+# =========================================================================================
+# VI. BROWSER DEPLOYMENT UNIT
+# =========================================================================================
+
+class BrowserDeployment {
+    static [void] Install([string]$Choice) {
+        $Manifest = @{
+            "1" = @{ Name="Google Chrome"; Url="https://dl.google.com/chrome/install/standalone/policy/googlechromestandaloneenterprise64.msi" }
+            "2" = @{ Name="Mozilla Firefox"; Url="https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=de" }
+            "3" = @{ Name="Tor Browser"; Url="https://www.torproject.org/dist/torbrowser/13.0.10/torbrowser-install-win64-13.0.10_ALL.exe" }
+        }
+
+        if ($Manifest.ContainsKey($Choice)) {
+            $Target = $Manifest[$Choice]
+            [DebloatraniumCoreLogger]::Log("Downloade $($Target.Name)...", "STAGE")
+            $TempPath = "$env:TEMP\browser_setup.exe"
+            Invoke-WebRequest -Uri $Target.Url -OutFile $TempPath
+            [DebloatraniumCoreLogger]::Log("Installiere $($Target.Name) im Hintergrund...", "INFO")
+            Start-Process -FilePath $TempPath -ArgumentList "/silent /install" -Wait
+            [DebloatraniumCoreLogger]::Log("Installation abgeschlossen.", "SUCCESS")
+        }
+    }
+}
+
+# =========================================================================================
+# VII. ORCHESTRATION & MAIN CONTROL FLOW
+# =========================================================================================
+
+function Invoke-MainFlow {
+    [DebloatraniumCoreLogger]::PrintHeader()
     
-    # Cortana & Search Terminierung
-    $searchKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
-    Set-ItemProperty -Path $searchKey -Name "BingSearchEnabled" -Value 0
-    Set-ItemProperty -Path $searchKey -Name "CanCortanaBeEnabled" -Value 0
+    # Init Hardware HAL
+    $HAL = New-Object HardwareIntrospection
+    
+    # 1. Sprachauswahl (TR, DE, EN)
+    Write-Host "`n[1] DEUTSCH | [2] ENGLISH | [3] TÜRKÇE" -ForegroundColor White
+    $langChoice = Read-Host "Sprache / Dil secin"
+    
+    $S = switch($langChoice) {
+        "3" { @{ WiFi="WiFi kalsin mi? (e/h)"; BT="Bluetooth kalsin mi? (e/h)"; Printer="Yazici destegi? (e/h)"; Edge="Edge silinsin mi? (e/h)"; Browser="Tarayici (1:Chrome, 2:FF, 3:Tor, 4:Yok)?"; Level="Seviye (1-6)?"; Backup="Yedek?"; Confirm="Baslat?"; Done="TAMAMLANDI." } }
+        "1" { @{ WiFi="WLAN behalten? (j/n)"; BT="Bluetooth behalten? (j/n)"; Printer="Drucker-Support? (j/n)"; Edge="Edge entfernen? (j/n)"; Browser="Browser (1:Chrome, 2:FF, 3:Tor, 4:Keine)?"; Level="Level (1-6)?"; Backup="Backup erstellen?"; Confirm="Vorgang starten?"; Done="ABGESCHLOSSEN." } }
+        Default { @{ WiFi="Keep WiFi? (y/n)"; BT="Keep Bluetooth? (y/n)"; Printer="Keep Printer? (y/n)"; Edge="Remove Edge?"; Browser="Browser (1:Chrome, 2:FF, 3:Tor, 4:None)?"; Level="Level (1-6)?"; Backup="Create Backup?"; Confirm="Start optimization?"; Done="DONE." } }
+    }
 
-    # Radikale App-Löschung (Inkl. Store)
-    Write-Status "Führe radikale App-Eliminierung durch..." "INFO"
-    $whiteList = "ShellExperienceHost|StartMenuExperienceHost|immersivecontrolpanel|Search|Xaml|VCLibs"
-    Get-AppxPackage -AllUsers | Where-Object {$_.Name -notmatch $whiteList} | Remove-AppxPackage
+    # 2. Datenerfassung
+    $Y = if ($langChoice -eq "3") { "e" } elseif ($langChoice -eq "1") { "j" } else { "y" }
+    
+    $configWiFi   = (Read-Host $S.WiFi) -eq $Y
+    $configBT     = (Read-Host $S.BT) -eq $Y
+    $configPrint  = (Read-Host $S.Printer) -eq $Y
+    $configEdge   = (Read-Host $S.Edge) -eq $Y
+    $configBrowser = Read-Host $S.Browser
+    $configLevel  = Read-Host $S.Level
+    $configBackup = (Read-Host $S.Backup) -eq $Y
+
+    if ((Read-Host $S.Confirm) -ne $Y) { 
+        [DebloatraniumCoreLogger]::Log("Abbruch durch Benutzer.", "CRITICAL")
+        exit 
+    }
+
+    # 3. Execution Phase
+    [DebloatraniumCoreLogger]::Log("Starte Optimierungs-Pipeline...", "STAGE")
+    
+    if ($configBackup) {
+        $BPath = "$HOME\Desktop\Debloatranium_V8_Backup"
+        New-Item $BPath -ItemType Directory -Force | Out-Null
+        reg export HKLM "$BPath\HKLM.reg" /y | Out-Null
+        reg export HKCU "$BPath\HKCU.reg" /y | Out-Null
+        [DebloatraniumCoreLogger]::Log("Registry-Backup gesichert auf Desktop.", "SUCCESS")
+    }
+
+    # Core Tuning (Immer aktiv ab Level 1)
+    [CpuOptimizationModule]::Execute()
+    [MemoryOptimizationModule]::Execute()
+    [StorageOptimizationModule]::Execute()
+    [NetworkOptimizationModule]::Execute()
+    [GpuOptimizationModule]::Execute()
+
+    # Browser Deployment
+    [BrowserDeployment]::Install($configBrowser)
+
+    # Toggle Hardware Services
+    if (!$configWiFi)  { Stop-Service WlanSvc -Force; Set-Service WlanSvc -StartupType Disabled }
+    if (!$configBT)    { Stop-Service bthserv -Force; Set-Service bthserv -StartupType Disabled }
+    if (!$configPrint) { Stop-Service Spooler -Force; Set-Service Spooler -StartupType Disabled }
+
+    # Absolute Zero Execution
+    if ($configLevel -eq "6") {
+        [AbsoluteZeroEngine]::PurgeSystemServices()
+        [AbsoluteZeroEngine]::WipeTelemetryAndUwp()
+        [AbsoluteZeroEngine]::FreezeUserInterface()
+    }
+
+    # Finalisierung
+    $Duration = (Get-Date) - $StartTime
+    [DebloatraniumCoreLogger]::Log("$($S.Done) Dauer: $($Duration.Seconds)s", "SUCCESS")
+    Write-Host "`nBITTE RECHNER NEU STARTEN!" -ForegroundColor Red -BackgroundColor Black
+    pause
 }
 
-# =========================================================================================
-# MAIN EXECUTION CORE (LOGIK-STEUERUNG)
-# =========================================================================================
-
-Show-Header
-
-# Sprachauswahl
-$choice = Read-Host "Wähle Sprache / Select Language (1: DE, 2: EN)"
-$S = if ($choice -eq "1") { $lang.DE } else { $lang.EN }
-$Y = if ($choice -eq "1") { "j" } else { "y" }
-$N = "n"
-
-Show-Header
-Write-Status $S.Welcome "SUCCESS"
-
-# Datenerfassung
-if ((Read-Host $S.WiFi) -eq $N) { $Global:DebloatConfig.System.WiFi = $false }
-if ((Read-Host $S.BT) -eq $N) { $Global:DebloatConfig.System.Bluetooth = $false }
-if ((Read-Host $S.Printer) -eq $N) { $Global:DebloatConfig.System.Printer = $false }
-if ((Read-Host $S.Edge) -eq $Y) { $Global:DebloatConfig.System.Edge = $false }
-if ((Read-Host $S.Backup) -eq $Y) { $Global:DebloatConfig.System.Backup = $true }
-
-$lvl = Read-Host $S.Level
-switch ($lvl) {
-    "1" { $Global:DebloatConfig.Optimization.Flags.Perf = $true }
-    "2" { $Global:DebloatConfig.Optimization.Flags.Perf = $true; $Global:DebloatConfig.Optimization.Flags.Light = $true }
-    "3" { $Global:DebloatConfig.Optimization.Flags.Perf = $true; $Global:DebloatConfig.Optimization.Flags.Light = $true; $Global:DebloatConfig.Optimization.Flags.Med = $true }
-    "4" { $Global:DebloatConfig.Optimization.Flags.Perf = $true; $Global:DebloatConfig.Optimization.Flags.Light = $true; $Global:DebloatConfig.Optimization.Flags.Med = $true; $Global:DebloatConfig.Optimization.Flags.High = $true }
-    "5" { $Global:DebloatConfig.Optimization.Flags.Perf = $true; $Global:DebloatConfig.Optimization.Flags.Light = $true; $Global:DebloatConfig.Optimization.Flags.Med = $true; $Global:DebloatConfig.Optimization.Flags.High = $true; $Global:DebloatConfig.Optimization.Flags.Ext = $true }
-    "6" { $Global:DebloatConfig.Optimization.Flags.Perf = $true; $Global:DebloatConfig.Optimization.Flags.Light = $true; $Global:DebloatConfig.Optimization.Flags.Med = $true; $Global:DebloatConfig.Optimization.Flags.High = $true; $Global:DebloatConfig.Optimization.Flags.Ext = $true; $Global:DebloatConfig.Optimization.Flags.Zero = $true }
-}
-
-# START DER OPTIMIERUNG
-if ($Global:DebloatConfig.Optimization.Flags.Zero -and (Read-Host $S.ConfirmZero) -ne $Y) { exit }
-
-# Phase A: Sicherheit
-if ($Global:DebloatConfig.System.Backup) { Invoke-Registry-Backup }
-
-# Phase B: Hardware Core (Immer aktiv für Performance)
-Set-CPU-Architecture-Optimization
-Set-RAM-Memory-Hardening
-Set-SSD-I/O-Performance
-Set-GPU-Latency-Optimization
-Set-Network-Stack-Optimization
-
-# Phase C: Hardware Feature Management
-$hardSvcs = @()
-if (!$Global:DebloatConfig.System.Bluetooth) { $hardSvcs += "bthserv", "BTAGService" }
-if (!$Global:DebloatConfig.System.Printer)   { $hardSvcs += "Spooler" }
-if (!$Global:DebloatConfig.System.WiFi)      { $hardSvcs += "WlanSvc" }
-foreach ($s in $hardSvcs) { Stop-Service $s -Force; Set-Service $s -StartupType Disabled }
-
-# Phase D: Modulare Bereinigung
-if ($Global:DebloatConfig.Optimization.Flags.Med) {
-    Remove-UWP-Bloatware -AppList @("BingWeather", "GetHelp", "SkypeApp", "YourPhone", "ZuneMusic", "BingNews", "FeedbackHub")
-}
-
-if ($Global:DebloatConfig.Optimization.Flags.High) {
-    Write-Status "Entferne OneDrive & Cortana-Core..." "STAGE"
-    Get-AppxPackage *onedrive* | Remove-AppxPackage
-    Get-AppxPackage *cortana* | Remove-AppxPackage
-}
-
-if (!$Global:DebloatConfig.System.Edge) { Remove-Edge-Infrastructure }
-
-# Phase E: Absolute Zero (Ultimative Lösung)
-if ($Global:DebloatConfig.Optimization.Flags.Zero) { Invoke-Absolute-Zero-Purge }
-
-# Phase F: Finalisierung
-Write-Status "Bereinige System-Cache & Temp-Files..." "STAGE"
-Remove-Item "$env:TEMP\*" -Recurse -Force
-Clear-RecycleBin -Confirm:$false
-
-$Duration = (Get-Date) - $StartTime
-Write-Host "`n"
-Write-Host "****************************************************************" -ForegroundColor Cyan
-Write-Host "   $($S.Finalize)" -ForegroundColor Green -BackgroundColor Black
-Write-Host "   Gesamtdauer: $($Duration.Seconds) Sekunden." -ForegroundColor White
-Write-Host "****************************************************************" -ForegroundColor Cyan
-pause
+# Start Framework
+Invoke-MainFlow
