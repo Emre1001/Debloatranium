@@ -1,100 +1,131 @@
 ☢️ Debloatranium
 
-The ultimate Windows Debloater & Optimizer for every PC. > Powerful. Customizable. Multilingual.
+The ultimate Windows Debloater & Optimizer for every PC.
 
-🌍 About the Project
+> Powerful. Customizable. Multilingual.
+
+---
+
+## 🌍 About the Project
 
 Debloatranium is an interactive PowerShell tool designed to accelerate and clean up your Windows experience. It removes bloatware, optimizes privacy, and tailors Windows exactly to your needs—whether for gaming, office work, or a minimal setup.
 
-✨ Highlights
+---
 
-🗣️ Multilingual: Supports German 🇩🇪, English 🇺🇸, and Turkish 🇹🇷.
+## ✨ Highlights
 
-🌐 Browser Choice: Removes Edge (optional) and automatically installs Chrome, Firefox, or Tor.
+* 🗣️ **Multilingual**: German 🇩🇪, English 🇺🇸, Turkish 🇹🇷
+* 🌐 **Browser Choice**: Optional Edge removal + Chrome / Firefox / Tor install
+* 🌙 **Style**: Automatic Dark Mode
+* 🛡️ **Security**: Built-in Registry Backup
+* 🎮 **Gaming Ready**: Extreme mode for maximum FPS
 
-🌙 Style: Automatically enables Dark Mode.
+---
 
-🛡️ Security: Built-in Registry Backup feature.
+## 🚀 Installation (Quick Start)
 
-🎮 Gaming Ready: Special "Extreme" mode for maximum FPS.
+Start PowerShell as **Administrator** and run:
 
-🚀 Installation (Quick Start)
+```
+iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex
+```
 
-Start PowerShell as Administrator and run the following command. The script will load and start directly:
+> You are guided through an interactive menu. **No changes happen without confirmation.**
 
-iwr -UseBasicParsing [https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1](https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1) | iex
+---
 
+## 🎚️ Optimization Levels
 
-Note: You will be guided through an interactive menu. No changes are made until you confirm them.
+Debloatranium forces a **clear decision**. Each level builds on the previous one. If you click blindly, that’s on you.
 
-🎚️ Optimization Levels
+---
 
-Choose the level that fits your system:
+### 1️⃣ Minimum — Safe Performance
 
-Level
+**What it does:**
 
-Name
+* Reduces telemetry
+* Enables Game Mode
+* Removes **no** apps
 
-Description
+**Best for:** Office PCs, school devices, cautious users
 
-1️⃣
+---
 
-Minimum
+### 2️⃣ Light — Less Background Junk
 
-Performance tweaks only (Telemetry reduced, GameMode on). No apps are deleted.
+**Adds to Minimum:**
 
-2️⃣
+* Disables unused services (Fax, Hibernation)
 
-Light
+**Best for:** Everyday PCs, low-storage laptops
 
-Same as Minimum + disables unused services (Fax, Hibernation).
+---
 
-3️⃣
+### 3️⃣ Medium — Obvious Bloat Gone
 
-Medium
+**Adds to Light:**
 
-Same as Light + removes obvious bloatware (Weather, News, Solitaire).
+* Removes Weather, News, Solitaire, and similar apps
 
-4️⃣
+**Best for:** Gaming & productivity systems
 
-High
+---
 
-Same as Medium + removes OneDrive, Cortana, Maps & Feedback Hub.
+### 4️⃣ High — Microsoft, Step Back
 
-5️⃣
+**Adds to Medium:**
 
-Extreme
+* Removes OneDrive
+* Removes Cortana
+* Removes Maps
+* Removes Feedback Hub
 
-⚠️ For Gaming/Pros only! Removes almost ALL system apps and the Microsoft Store. Only essentials remain.
+**Side effects:** Less cloud integration, more peace
 
-6️⃣
+---
 
-Custom
+### 5️⃣ Extreme — ☠️ Pros Only
 
-Choose manually which categories you want to apply.
+**Adds to High:**
 
-⚙️ Features in Detail
+* Removes almost all system apps
+* Removes Microsoft Store
+* Leaves only essentials
 
-The script asks you step-by-step:
+⚠️ **Warning:** No rollback without backup. No excuses afterward.
 
-Language: Choose your preferred language.
+---
 
-Hardware Features: Keep or disable WiFi, Bluetooth, and Printer Spooler.
+### 6️⃣ Custom — Full Control
 
-Browser: Decide the fate of Microsoft Edge.
+* Manually choose categories
+* Step-by-step confirmations
 
-Backup: Create a backup of your current settings directly on the Desktop.
+Best for users who actually know what they’re doing.
 
-Security: Double confirmation before execution.
+---
 
-⚠️ Disclaimer
+## ⚙️ Interactive Features
 
-USE AT YOUR OWN RISK.
+The script asks you step by step:
 
-This script makes deep changes to the Windows system configuration. Although it has been tested extensively and includes safety mechanisms (like the backup function), the developer cannot guarantee the functionality of your system after application.
+* Language selection
+* Hardware features (WiFi, Bluetooth, Printer)
+* Browser handling (Edge)
+* Backup creation
+* Final security confirmation
 
-The Extreme Mode deletes the Microsoft Store and many system components. This is intentional but may limit certain Windows functions.
+---
 
-It is strongly recommended to create a System Restore Point or use the integrated Registry Backup feature before using "Extreme" mode or making general changes.
+## ⚠️ Disclaimer
 
-Made with ❤️ by Emre1001
+**USE AT YOUR OWN RISK.**
+
+Debloatranium makes deep system changes. While tested and protected by backups, system functionality is not guaranteed—especially in **Extreme** mode.
+
+Always create a restore point or use the built-in backup.
+
+---
+
+Made with ❤️ by **Emre1001**
