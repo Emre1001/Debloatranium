@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Debloatranium 2025 - Professional Windows Debloat & Browser Installer
-    Version: 1.0.0
+    Version: 1.1.0
     Author: Emre1001 (Optimized for i7-4790k / 1050 Ti)
 
 .DESCRIPTION
@@ -32,7 +32,7 @@ $AppWhitelist = @(
     "Microsoft.WindowsCalculator",
     "Microsoft.WindowsStore",
     "Microsoft.Paint",
-    "Microsoft.Windows.Photos",
+    "Microsoft.WindowsPhotos",
     "Microsoft.DesktopAppInstaller", # Wichtig für Winget
     "Microsoft.VP9VideoExtensions"
 )
@@ -88,7 +88,7 @@ function Set-RestorePoint {
         Write-Log "Fehler beim Erstellen des Wiederherstellungspunkts: $($_.Exception.Message)" "WARN"
     }
     
-    if ($Interactive) {
+    if ($Interactive -or $true) {
         $Choice = Read-Host "Wiederherstellungspunkt konnte nicht erstellt werden. Trotzdem fortfahren? (y/n)"
         return ($Choice -eq 'y')
     }
@@ -98,12 +98,15 @@ function Set-RestorePoint {
 # --- DEBLOAT MODULE DEFINITIONEN ---
 function Plan-AppxDebloat {
     Write-Log "Analysiere installierte Apps (Whitelist-Verfahren)..."
-    $Packages = Get-AppxPackage -AllUsers | Where-Object { $_.Name -notin $AppWhitelist -and $_.NonRemovable -eq $false }
-    
-    foreach ($Pkg in $Packages) {
-        Register-PlannedAction "AppRemoval" $Pkg.Name "Entfernt Bloatware App: $($Pkg.Name)" {
-            Get-AppxPackage -Name $using:Pkg.Name -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+    try {
+        $Packages = Get-AppxPackage -AllUsers | Where-Object { $_.Name -notin $AppWhitelist -and $_.NonRemovable -eq $false }
+        foreach ($Pkg in $Packages) {
+            Register-PlannedAction "AppRemoval" $Pkg.Name "Entfernt Bloatware App: $($Pkg.Name)" {
+                Get-AppxPackage -Name $using:Pkg.Name -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+            }
         }
+    } catch {
+        Write-Log "Fehler bei der App-Analyse: $($_.Exception.Message)" "ERROR"
     }
 }
 
@@ -128,7 +131,6 @@ function Plan-ServiceOptimizations {
 function Plan-BrowserInstall {
     # Beispielhafter Browser Installer (Firefox)
     $BrowserUrl = "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=de"
-    # Hinweis: In einem echten Release sollten hier SHA256 Hashes geprüft werden.
     
     Register-PlannedAction "Browser" "Firefox" "Installiert den Firefox Browser (Stable x64)" {
         $TempPath = "$env:TEMP\FirefoxSetup.exe"
@@ -150,16 +152,21 @@ function Invoke-DebloatEngine {
         return
     }
 
+    # Sicherheits-Check: Falls -Confirm vergessen wurde, fragen wir im interaktiven Modus nach
     if (-not $Confirm) {
-        Write-Log "Kritisch: -Confirm Schalter fehlt! Destruktive Aktionen blockiert." "ERROR"
-        return
+        Write-Log "WARNUNG: -Confirm Schalter fehlt!" "WARN"
+        $ManualConfirm = Read-Host "Möchten Sie destruktive Aktionen manuell freischalten? (y/n)"
+        if ($ManualConfirm -ne 'y') {
+            Write-Log "Kritisch: Keine Bestätigung erhalten. Destruktive Aktionen blockiert." "ERROR"
+            return
+        }
     }
 
     Write-Log "Starte Ausführung der $($ActionQueue.Count) geplanten Aktionen..."
     
     foreach ($Task in $ActionQueue) {
         $Proceed = $true
-        if ($Interactive) {
+        if ($Interactive -or (-not $Confirm)) {
             Write-Host "`n[BESTÄTIGUNG ERFORDERLICH]" -ForegroundColor Magenta
             Write-Host "Aktion: $($Task.Description)"
             $Ans = Read-Host "Ausführen? (y/n)"
@@ -196,7 +203,7 @@ if (-not (Set-RestorePoint)) {
 # 1. Planung
 Plan-AppxDebloat
 Plan-ServiceOptimizations
-if ($Interactive) {
+if ($Interactive -or $true) {
     $InBrowser = Read-Host "Optional: Browser-Installation planen? (y/n)"
     if ($InBrowser -eq 'y') { Plan-BrowserInstall }
 }
