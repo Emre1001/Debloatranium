@@ -36,68 +36,14 @@ iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/ma
 
 ## 🎚️ Optimization Levels
 
-Debloatranium forces a **clear decision**. Each level builds on the previous one. If you click blindly, that’s on you.
-
----
-
-### 1️⃣ Minimum — Safe Performance
-
-**What it does:**
-
-* Reduces telemetry
-* Enables Game Mode
-* Removes **no** apps
-
-**Best for:** Office PCs, school devices, cautious users
-
----
-
-### 2️⃣ Light — Less Background Junk
-
-**Adds to Minimum:**
-
-* Disables unused services (Fax, Hibernation)
-
-**Best for:** Everyday PCs, low-storage laptops
-
----
-
-### 3️⃣ Medium — Obvious Bloat Gone
-
-**Adds to Light:**
-
-* Removes Weather, News, Solitaire, and similar apps
-
-**Best for:** Gaming & productivity systems
-
----
-
-### 4️⃣ High — Microsoft, Step Back
-
-**Adds to Medium:**
-
-* Removes OneDrive
-* Removes Cortana
-* Removes Maps
-* Removes Feedback Hub
-
-**Side effects:** Less cloud integration, more peace
-
----
-
-### 5️⃣ Extreme — ☠️ Pros Only
-
-**Adds to High:**
-
-* Removes almost all system apps
-* Removes Microsoft Store
-* Leaves only essentials
-
-⚠️ **Warning:** No rollback without backup. No excuses afterward.
-
----
-
-### 6️⃣ Custom — Full Control
+| Level | Name        | Description                                                                                                |
+| ----: | ----------- | ---------------------------------------------------------------------------------------------------------- |
+|   1️⃣ | **Minimum** | Performance tweaks only (Telemetry reduced, Game Mode enabled). No apps are removed.                       |
+|   2️⃣ | **Light**   | Minimum + disables unused services (Fax, Hibernation).                                                     |
+|   3️⃣ | **Medium**  | Light + removes obvious bloatware (Weather, News, Solitaire).                                              |
+|   4️⃣ | **High**    | Medium + removes OneDrive, Cortana, Maps & Feedback Hub.                                                   |
+|   5️⃣ | **Extreme** | ⚠️ For Gaming / Pros only. Removes almost all system apps and the Microsoft Store. Only essentials remain. |
+|   6️⃣ | **Custom**  | Manually choose which categories to apply.                                                                 |
 
 * Manually choose categories
 * Step-by-step confirmations
