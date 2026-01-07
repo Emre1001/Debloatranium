@@ -1,13 +1,14 @@
 <#
 .SYNOPSIS
-    Debloatranium Framework - Universal Architect Edition (v10.6)
+    Debloatranium Framework - Universal Architect Edition (v10.7)
     
 .DESCRIPTION
     Ein hochprofessionelles, objektorientiertes Optimierungs-Framework für Windows.
     Entwickelt für maximale System-Transparenz, minimale Latenz und universelle Kompatibilität.
+    Optimiert für High-Performance Legacy Hardware (i7-4790K Klasse).
     
-    FIX: Syntax-Fehler in Klassen-Parametern behoben (Klammern um Typen korrigiert).
-    OPTIMIERUNG: Dynamische Profile für High-Performance Desktop (i7-4790K Klasse) integriert.
+    FIX: Umfassendes Debugging der Klassen-Syntax (PowerShell 5.1/7+ Kompatibilität).
+    ERWEITERUNG: Zusätzliche Deep-Cleanup Module und erweiterte Hardware-Profile.
     
     (c) 2024-2026 Emre1001. Alle Rechte vorbehalten.
 #>
@@ -37,7 +38,7 @@ class DebloatLogger {
         $Title = @"
 ################################################################################
 #                                                                              #
-#      DEBLOATRANIUM UNIVERSAL ARCHITECT - ENTERPRISE v10.6                    #
+#      DEBLOATRANIUM UNIVERSAL ARCHITECT - ENTERPRISE v10.7                    #
 #      System-Optimierung für jeden PC | Entwickelt von Emre1001               #
 #                                                                              #
 ################################################################################
@@ -76,6 +77,7 @@ class SystemInventory {
     [string]$OS_Name
     [bool]$IsSSD
     [bool]$IsLaptop
+    [int]$CoreCount
 
     SystemInventory() {
         [DebloatLogger]::Log("Hardware-Audit wird durchgeführt...", "STAGE")
@@ -91,12 +93,13 @@ class SystemInventory {
             $this.GPU = $gpuInfo.Name
             $this.RAM_GB = [math]::Round($memInfo.Sum / 1GB)
             $this.OS_Name = $osInfo.Caption
+            $this.CoreCount = $cpuInfo.NumberOfCores
             $this.IsSSD = ($drive.MediaType -eq "SSD")
             $this.IsLaptop = ($chassis.ChassisTypes -contains 8 -or $chassis.ChassisTypes -contains 9 -or $chassis.ChassisTypes -contains 10)
 
-            [DebloatLogger]::Log("CPU: $($this.CPU)", "HARDWARE")
+            [DebloatLogger]::Log("CPU: $($this.CPU) ($($this.CoreCount) Kerne)", "HARDWARE")
             [DebloatLogger]::Log("GPU: $($this.GPU)", "HARDWARE")
-            [DebloatLogger]::Log("RAM: $($this.RAM_GB) GB", "HARDWARE")
+            [DebloatLogger]::Log("RAM: $($this.RAM_GB) GB DDR3/DDR4", "HARDWARE")
             [DebloatLogger]::Log("Typ: $(if($this.IsLaptop){"Laptop"}else{"Desktop"})", "HARDWARE")
         } catch {
             [DebloatLogger]::Log("Hardware-Scan unvollständig. Nutze generisches Profil.", "WARNING")
@@ -126,9 +129,12 @@ class SecurityVault {
             reg export HKLM "$($this.Path)\System_HKLM.reg" /y | Out-Null
             reg export HKCU "$($this.Path)\User_HKCU.reg" /y | Out-Null
             
+            # Host File Backup
+            Copy-Item "C:\Windows\System32\drivers\etc\hosts" -Destination "$($this.Path)\hosts.bak" -ErrorAction SilentlyContinue
+            
             # System Restore Point
             Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
-            Checkpoint-Computer -Description "Debloatranium_v10.6_AutoBackup" -RestorePointType "MODIFY_SETTINGS"
+            Checkpoint-Computer -Description "Debloatranium_v10.7_AutoBackup" -RestorePointType "MODIFY_SETTINGS"
             [DebloatLogger]::Log("Backup erfolgreich abgeschlossen.", "SUCCESS")
         } catch {
             [DebloatLogger]::Log("Backup-Fehler. Optimierung wird auf eigenes Risiko fortgesetzt.", "CRITICAL")
@@ -141,31 +147,36 @@ class SecurityVault {
 # =========================================================================================
 
 class KernelEngine {
-    # FIX: Typ-Deklaration muss in Klammern stehen
     static [void] ApplyTuning([SystemInventory]$Inv) {
         [DebloatLogger]::Log("Konfiguriere Kernel & CPU-Scheduling...", "STAGE")
         
-        # Priority Separation für maximale Vordergrund-Leistung
+        # Priority Separation für maximale Vordergrund-Leistung (Short Variable, High Priority)
         $KPath = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
         Set-ItemProperty -Path $KPath -Name "Win32PrioritySeparation" -Value 38 -Type DWord
         
+        # IRQ-Priorisierung für System-Timer
+        $IrqPath = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+        Set-ItemProperty -Path $IrqPath -Name "IRQ8Priority" -Value 1 -Type DWord
+        
         # Power Throttling global deaktivieren
-        $PowerPath = "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
+        $PowerPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
         if (!(Test-Path $PowerPath)) { 
             New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power" -Name "PowerThrottling" -ErrorAction SilentlyContinue | Out-Null
         }
         reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d 1 /f | Out-Null
 
-        # Deaktiviere CPU-Mitigationen für ältere Architekturen (wie i7-4790K / Haswell)
+        # Deaktiviere CPU-Mitigationen für i7-4790K (Haswell Architektur benötigt diesen Boost)
         [DebloatLogger]::Log("Optimiere CPU-Mitigationen für maximale Gaming-Performance...", "CONFIG")
         $MemPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
         Set-ItemProperty -Path $MemPath -Name "FeatureSettingsOverride" -Value 3 -Type DWord
         Set-ItemProperty -Path $MemPath -Name "FeatureSettingsOverrideMask" -Value 3 -Type DWord
+        
+        # Deaktiviere Meltdown/Spectre via Boot-Configuration (Fortgeschritten)
+        bcdedit /set {current} nx AlwaysOff | Out-Null
     }
 }
 
 class FileSystemEngine {
-    # FIX: Typ-Deklaration muss in Klammern stehen
     static [void] Apply([bool]$IsSSD) {
         [DebloatLogger]::Log("Optimiere NTFS & Disk-I/O...", "STAGE")
         
@@ -173,10 +184,15 @@ class FileSystemEngine {
         fsutil behavior set disablelastaccess 1
         fsutil behavior set disable8dot3 1
         
-        # Memory Management Registry Tweaks
+        # NTFS Memory Management
         $MMPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
         Set-ItemProperty -Path $MMPath -Name "LargeSystemCache" -Value 0 -Type DWord
-        Set-ItemProperty -Path $MMPath -Name "IoPageLockLimit" -Value 16777216 -Type DWord
+        Set-ItemProperty -Path $MMPath -Name "IoPageLockLimit" -Value 16777216 -Type DWord # 16MB Lock Limit
+        
+        # Prefetcher/Superfetch Optimierung
+        $PrefetchPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters"
+        Set-ItemProperty -Path $PrefetchPath -Name "EnablePrefetcher" -Value 0 -Type DWord
+        Set-ItemProperty -Path $PrefetchPath -Name "EnableSuperfetch" -Value 0 -Type DWord
     }
 }
 
@@ -192,6 +208,13 @@ class NetworkEngine {
         netsh int tcp set global dca=enabled
         netsh int tcp set global ecncapability=disabled
         netsh int tcp set global timestamps=disabled
+        netsh int tcp set global nonsackrttresiliency=disabled
+        netsh int tcp set global rsc=disabled
+        
+        # Netzwerk-Drosselung deaktivieren
+        $NetPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+        Set-ItemProperty -Path $NetPath -Name "NetworkThrottlingIndex" -Value 0xFFFFFFFF -Type DWord
+        Set-ItemProperty -Path $NetPath -Name "SystemResponsiveness" -Value 0 -Type DWord
     }
 }
 
@@ -208,6 +231,30 @@ class PrivacyEngine {
         if (!(Test-Path $Search)) { New-Item $Search -Force | Out-Null }
         Set-ItemProperty -Path $Search -Name "AllowCortana" -Value 0 -Type DWord
         Set-ItemProperty -Path $Search -Name "AllowSearchToUseLocation" -Value 0 -Type DWord
+        
+        # Werbe-ID deaktivieren
+        $AdPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
+        if (!(Test-Path $AdPath)) { New-Item $AdPath -Force | Out-Null }
+        Set-ItemProperty -Path $AdPath -Name "Enabled" -Value 0 -Type DWord
+    }
+}
+
+class VisualEngine {
+    static [void] ApplyDesktopTweaks() {
+        [DebloatLogger]::Log("Optimiere Desktop-Animationen & Menüs...", "STAGE")
+        
+        # Klassisches Kontextmenü für Windows 11 (wenn anwendbar)
+        $Win11Context = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
+        if (!(Test-Path $Win11Context)) { New-Item -Path $Win11Context -Force | Out-Null }
+        Set-ItemProperty -Path $Win11Context -Name "(Default)" -Value "" -Force
+        
+        # Menü-Verzögerung reduzieren
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0"
+        
+        # Dark Mode erzwingen
+        $Persist = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        Set-ItemProperty -Path $Persist -Name "AppsUseLightTheme" -Value 0 -Type DWord
+        Set-ItemProperty -Path $Persist -Name "SystemUsesLightTheme" -Value 0 -Type DWord
     }
 }
 
@@ -228,7 +275,8 @@ class AbsoluteZeroEngine {
             "PhoneSvc", "SensorService", "MapsBroker", "RetailDemo", "WalletService",
             "RemoteRegistry", "Fax", "BcastDVRUserService", "CaptureService",
             "MessagingService", "SEMgrSvc", "TabletInputService", "TermService",
-            "UserExperienceVirtualizationService", "Spooler", "PrintNotify"
+            "UserExperienceVirtualizationService", "Spooler", "PrintNotify",
+            "WbioSvc", "Wisvc", "WpcMonSvc", "SecurityHealthService"
         )
 
         foreach ($service in $DeathList) {
@@ -242,9 +290,16 @@ class AbsoluteZeroEngine {
 
     static [void] PurgeUwpPackages() {
         [DebloatLogger]::Log("Entferne UWP-Framework & Bloatware...", "STAGE")
-        $White = "ShellExperienceHost|StartMenuExperienceHost|immersivecontrolpanel|Search|Xaml|VCLibs"
+        $White = "ShellExperienceHost|StartMenuExperienceHost|immersivecontrolpanel|Search|Xaml|VCLibs|DesktopAppInstaller"
         Get-AppxPackage -AllUsers | Where-Object {$_.Name -notmatch $White} | Remove-AppxPackage -ErrorAction SilentlyContinue
         Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -notmatch $White} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+    }
+
+    static [void] DeepRegistryClean() {
+        [DebloatLogger]::Log("Säubere Registry-Leichen...", "STAGE")
+        # Entferne Telemetrie-Keys im Root
+        reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack" /f | Out-Null
+        reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /f | Out-Null
     }
 }
 
@@ -264,7 +319,7 @@ class UserInterface {
             "3" { # Türkce
                 $this.Y_Key = "e"; $this.N_Key = "h"
                 $this.Strings = @{
-                    Intro = "Debloatranium v10.6'a Hosgeldiniz."
+                    Intro = "Debloatranium v10.7'a Hosgeldiniz."
                     Prompt = "Seciminiz (e: Evet, h: Hayir): "
                     WiFi = "WiFi kalsin mi? "
                     BT = "Bluetooth kalsin mi? "
@@ -275,12 +330,13 @@ class UserInterface {
                     Backup = "Yedek alinsin mi? "
                     Confirm = "BASLATILSIN MI? "
                     Final = "ISLEM BITTI. RESTART GEREKLI."
+                    Cleaning = "Temizlik yapiliyor..."
                 }
             }
             "1" { # Deutsch
                 $this.Y_Key = "j"; $this.N_Key = "n"
                 $this.Strings = @{
-                    Intro = "Willkommen bei Debloatranium v10.6."
+                    Intro = "Willkommen bei Debloatranium v10.7."
                     Prompt = "Eingabe (j: Ja, n: Nein): "
                     WiFi = "WLAN behalten? "
                     BT = "Bluetooth behalten? "
@@ -291,12 +347,13 @@ class UserInterface {
                     Backup = "System-Sicherung erstellen? "
                     Confirm = "VORGANG JETZT STARTEN? "
                     Final = "OPTIMIERUNG BEENDET. NEUSTART ERFORDERLICH."
+                    Cleaning = "Systemreinigung wird ausgeführt..."
                 }
             }
             Default { # English
                 $this.Y_Key = "y"; $this.N_Key = "n"
                 $this.Strings = @{
-                    Intro = "Welcome to Debloatranium v10.6."
+                    Intro = "Welcome to Debloatranium v10.7."
                     Prompt = "Input (y: Yes, n: No): "
                     WiFi = "Keep WiFi? "
                     BT = "Keep Bluetooth? "
@@ -307,6 +364,7 @@ class UserInterface {
                     Backup = "Create System Backup? "
                     Confirm = "START PROCESS NOW? "
                     Final = "COMPLETED. RESTART REQUIRED."
+                    Cleaning = "Cleaning system..."
                 }
             }
         }
@@ -358,7 +416,11 @@ class InstallerService {
         $Path = "$env:TEMP\installer.exe"
         try {
             Invoke-WebRequest -Uri $List[$ID] -OutFile $Path
-            Start-Process -FilePath $Path -ArgumentList "/silent /install" -Wait
+            if ($ID -eq "1") {
+                Start-Process msiexec.exe -ArgumentList "/i `"$Path`" /qn" -Wait
+            } else {
+                Start-Process -FilePath $Path -ArgumentList "/silent /install" -Wait
+            }
             [DebloatLogger]::Log("Browser erfolgreich installiert.", "SUCCESS")
         } catch {
             [DebloatLogger]::Log("Fehler bei der Browser-Installation.", "WARNING")
@@ -367,7 +429,26 @@ class InstallerService {
 }
 
 # =========================================================================================
-# IX. MAIN EXECUTION CONTROLLER
+# IX. DEEP CLEANER (PRE/POST)
+# =========================================================================================
+
+class DeepCleaner {
+    static [void] ClearTemp() {
+        [DebloatLogger]::Log("Bereinige temporäre Dateien...", "STAGE")
+        $Paths = @("$env:TEMP\*", "$env:SystemRoot\Temp\*", "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\thumbcache_*.db")
+        foreach ($p in $Paths) {
+            Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    static [void] ClearLogs() {
+        [DebloatLogger]::Log("Lösche Windows-Event-Logs...", "STAGE")
+        Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }
+    }
+}
+
+# =========================================================================================
+# X. MAIN EXECUTION CONTROLLER
 # =========================================================================================
 
 function Start-MainEngine {
@@ -396,21 +477,24 @@ function Start-MainEngine {
     [DebloatLogger]::Separator()
     if (!($UI.Ask("Confirm"))) { [DebloatLogger]::Log("Abbruch durch Benutzer.", "CRITICAL"); exit }
 
-    # EXECUTION
+    # EXECUTION START
     if ($doBackup) { 
         $Vault = New-Object SecurityVault
         $Vault.CreateFullBackup($LID) 
     }
 
+    # Optimierung der Hardware-Module
     [KernelEngine]::ApplyTuning($Inv)
     [FileSystemEngine]::Apply($Inv.IsSSD)
     [NetworkEngine]::TuneTcpStack()
     [PrivacyEngine]::ApplyHardening()
+    [VisualEngine]::ApplyDesktopTweaks()
 
-    # Toggles
+    # Hardware Toggles
     if (!$kWifi)  { 
         Stop-Service WlanSvc -Force -ErrorAction SilentlyContinue
         Set-Service WlanSvc -StartupType Disabled -ErrorAction SilentlyContinue 
+        netsh interface set interface "Wi-Fi" admin=disabled -ErrorAction SilentlyContinue
     }
     if (!$kBT)    { 
         Stop-Service bthserv -Force -ErrorAction SilentlyContinue
@@ -421,36 +505,80 @@ function Start-MainEngine {
         Set-Service Spooler -StartupType Disabled -ErrorAction SilentlyContinue 
     }
 
-    # Browser
+    # Browser Installation
     [InstallerService]::Deployment($bID)
 
-    # Edge Blocking
+    # Microsoft Edge Kill-Switch
     if ($rEdge) {
         [DebloatLogger]::Log("Blockiere Microsoft Edge...", "WARNING")
-        $EP = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\msedge.exe"
-        if (!(Test-Path $EP)) { New-Item $EP -Force | Out-Null }
-        Set-ItemProperty -Path $EP -Name "Debugger" -Value "ntsd -d"
+        $EdgePaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\msedge.exe",
+            "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\msedgewebview2.exe"
+        )
+        foreach ($ep in $EdgePaths) {
+            if (!(Test-Path $ep)) { New-Item $ep -Force | Out-Null }
+            Set-ItemProperty -Path $ep -Name "Debugger" -Value "ntsd -d"
+        }
     }
 
-    # Level Scaling
-    if ($Lvl -ge "3") {
-        [DebloatLogger]::Log("Entferne Standard-Bloatware...", "STAGE")
-        Get-AppxPackage *Weather* | Remove-AppxPackage -ErrorAction SilentlyContinue
-        Get-AppxPackage *ZuneVideo* | Remove-AppxPackage -ErrorAction SilentlyContinue
+    # Level Scaling Logic
+    switch ($Lvl) {
+        "2" {
+            [DebloatLogger]::Log("Disabling Hibernation...", "INFO")
+            powercfg -h off
+        }
+        "3" {
+            [DebloatLogger]::Log("Entferne Standard-Bloatware...", "STAGE")
+            Get-AppxPackage *Weather* | Remove-AppxPackage -ErrorAction SilentlyContinue
+            Get-AppxPackage *ZuneVideo* | Remove-AppxPackage -ErrorAction SilentlyContinue
+            Get-AppxPackage *SolitaireCollection* | Remove-AppxPackage -ErrorAction SilentlyContinue
+        }
+        "4" {
+            [DebloatLogger]::Log("Deep Removal: OneDrive & Cortana...", "STAGE")
+            taskkill /f /im OneDrive.exe -ErrorAction SilentlyContinue | Out-Null
+            %SystemRoot%\SysWOW64\OneDriveSetup.exe /uninstall -ErrorAction SilentlyContinue | Out-Null
+        }
+        "5" {
+            [DebloatLogger]::Log("EXTREME: Microsoft Store wird entfernt...", "CRITICAL")
+            Get-AppxPackage *Store* | Remove-AppxPackage -ErrorAction SilentlyContinue
+            [AbsoluteZeroEngine]::PurgeUwpPackages()
+        }
+        "6" {
+            [AbsoluteZeroEngine]::PurgeServices()
+            [AbsoluteZeroEngine]::PurgeUwpPackages()
+            [AbsoluteZeroEngine]::DeepRegistryClean()
+            [DeepCleaner]::ClearLogs()
+        }
     }
-    if ($Lvl -eq "6") {
-        [AbsoluteZeroEngine]::PurgeServices()
-        [AbsoluteZeroEngine]::PurgeUwpPackages()
-    }
+
+    # Final Cleanup
+    [DeepCleaner]::ClearTemp()
 
     # Finalize
     [DebloatLogger]::Separator()
     [DebloatLogger]::Log($UI.Strings["Final"], "SUCCESS")
     $Duration = (Get-Date) - $StartTime
     [DebloatLogger]::Log("Gesamtlaufzeit: $($Duration.Minutes)m $($Duration.Seconds)s", "CONFIG")
+    
+    # ASCII Art Outro
+    Write-Host @"
+    
+      DONE! PC optimized for i7-4790K / Gaming.
+      Reboot to apply all kernel changes.
+    
+"@ -ForegroundColor Cyan
+    
     [DebloatLogger]::Separator()
     pause
 }
 
-# START
-Start-MainEngine
+# =========================================================================================
+# XI. BOOTSTRAPPER
+# =========================================================================================
+
+try {
+    Start-MainEngine
+} catch {
+    [DebloatLogger]::Log("Fataler Fehler im Main-Controller: $($_.Exception.Message)", "CRITICAL")
+    pause
+}
