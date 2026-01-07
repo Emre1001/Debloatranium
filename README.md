@@ -27,7 +27,7 @@ Debloatranium is an interactive PowerShell tool designed to accelerate and clean
 Start PowerShell as **Administrator** and run:
 
 ```
-iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex
+iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium-1.0.ps1 | iex
 ```
 
 > You are guided through an interactive menu. **No changes happen without confirmation.**
