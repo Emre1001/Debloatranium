@@ -13,8 +13,8 @@ Debloatranium 2025 automates common Windows 10/11 cleanup tasks and offers optio
 1. Open PowerShell as Administrator.
 2. Download and run the script from the repository (interactive prompts & per-action confirmations):
 
-```powershell
 # Fetch and execute the latest script (review before running)
+```powershell
 iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex
 ```
 
