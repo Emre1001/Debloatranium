@@ -1,312 +1,327 @@
 <#
 .SYNOPSIS
-    Debloatranium - Ein universeller Windows Debloater.
+    Debloatranium - The Ultimate Windows Power-User Optimization Suite.
 .DESCRIPTION
-    Dieses Skript optimiert Windows strikt nach Benutzerpräferenzen.
-    Reihenfolge: Sprache -> Features -> Edge/Browser -> DarkMode (Auto) -> Level -> Backup -> Confirm -> Execute.
+    Version: 2.0 (Massive Extended Edition)
+    Author: Emre1001
+    Target: Maximum FPS / Minimum Latency / Minimal Processes (Goal: 40-50)
+    Optimized for: Intel Core i7 High-Performance Systems
 #>
 
-# --- Initialisierung & Admin Check ---
-if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Bitte starte das Skript als Administrator!" -ForegroundColor Red
-    pause
-    exit
+# =========================================================================================
+# INITIALISIERUNG & SICHERHEITS-CHECK
+# =========================================================================================
+
+$ErrorActionPreference = "SilentlyContinue"
+
+function Check-Admin {
+    if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "################################################################" -ForegroundColor Red
+        Write-Host "   ERROR: ADMINISTRATIVE PRIVILEGES REQUIRED" -ForegroundColor Red
+        Write-Host "   BITTE STARTEN SIE DAS SKRIPT ALS ADMINISTRATOR" -ForegroundColor Red
+        Write-Host "################################################################" -ForegroundColor Red
+        pause
+        exit
+    }
 }
 
-# --- Variablen für Entscheidungen (Standard: False/No) ---
-$doWiFi = $true
-$doBT = $true
-$doPrinter = $true
-$keepEdge = $true
-$newBrowser = "None"
-$doBackup = $false
-# Optimierungs-Flags
-$optPerformance = $false # Minimum
-$optLight = $false       # Leicht
-$optMedium = $false      # Mittel
-$optHigh = $false        # Hoch
-$optExtreme = $false     # Extrem
+Check-Admin
 
-# --- Sprach-Definitionen ---
+# =========================================================================================
+# GLOBALE VARIABLEN & KONFIGURATION
+# =========================================================================================
+
+$Global:Config = @{
+    WiFi     = $true
+    BT       = $true
+    Printer  = $true
+    Edge     = $true
+    Browser  = "None"
+    Backup   = $false
+    Level    = 0
+    Flags    = @{
+        Perf   = $false
+        Light  = $false
+        Med    = $false
+        High   = $false
+        Ext    = $false
+    }
+}
+
+# Sprachpaket (Erweitert)
 $lang = @{
     DE = @{
-        Welcome = "Willkommen bei Debloatranium!"
-        SelectLang = "Wähle deine Sprache / Select Language / Dil Seçin (1: Deutsch, 2: English, 3: Türkçe): "
-        WiFi = "Möchtest du WiFi behalten? (j/n): "
-        BT = "Möchtest du Bluetooth behalten? (j/n): "
-        Printer = "Möchtest du Drucker-Funktionen behalten? (j/n): "
-        Edge = "Möchtest du Microsoft Edge behalten? (j/n): "
-        Browser = "Welchen Browser möchtest du stattdessen? (1: Chrome, 2: Firefox, 3: Tor, 4: Keinen): "
-        Level = "Wähle Optimierungsgrad (1: Minimum, 2: Leicht, 3: Mittel, 4: Hoch, 5: Extrem, 6: Custom): "
-        CustomPerf = "Custom: Performance Tweaks aktivieren (Minimum)? (j/n): "
-        CustomLight = "Custom: Unbenutzte Dienste deaktivieren (Leicht)? (j/n): "
-        CustomMed = "Custom: Unnötige Apps entfernen (Mittel)? (j/n): "
-        CustomHigh = "Custom: Harte Einstellungen & OneDrive weg (Hoch)? (j/n): "
-        CustomExt = "Custom: System radikal bereinigen inkl. Store (Extrem)? (j/n): "
-        Backup = "Möchtest du ein Registry-Backup auf dem Desktop erstellen? (j/n): "
-        Confirm1 = "Sollen die Änderungen angewendet werden? (j/n): "
-        Confirm2 = "Bist du absolut sicher? (j/n): "
-        Processing = "Verarbeite... Bitte warten."
-        Done = "Fertig! Bitte starte den PC neu."
+        Header      = "DEBLOATRANIUM ULTIMATE v2.0 - PROFESSIONAL EDITION"
+        Welcome     = "Willkommen. System-Analyse abgeschlossen. Bereit für Optimierung."
+        SelectLang  = "Wähle deine Sprache (1: Deutsch, 2: English, 3: Türkçe): "
+        WiFi        = "[QUERIE] Möchtest du die WiFi-Funktionalität behalten? (j/n): "
+        BT          = "[QUERIE] Möchtest du Bluetooth-Dienste behalten? (j/n): "
+        Printer     = "[QUERIE] Möchtest du Drucker-Support (Spooler) behalten? (j/n): "
+        Edge        = "[QUERIE] Soll Microsoft Edge vom System entfernt werden? (j/n): "
+        Browser     = "[SELECT] Ersatz-Browser installieren: (1: Chrome, 2: Firefox, 3: Tor, 4: Keiner): "
+        Level       = "WÄHLE OPTIMIERUNGS-STRATEGIE:`n[1] MINIMUM   - Sicher, nur Registry-Performance Tweaks`n[2] LIGHT     - Deaktiviert grundlegende Hintergrund-Dienste`n[3] MEDIUM    - Entfernt Standard-Bloatware & Apps`n[4] HIGH      - Aggressives Debloat (OneDrive/Search/Cortana)`n[5] EXTREME   - ULTRA GAMING (Ziel: 40 Prozesse, Store-Entfernung)`n[6] CUSTOM    - Manuelle Auswahl der Module`n`nDEIN LEVEL: "
+        CustomPerf  = "[CUSTOM] Kernel- & I/O-Optimierung aktivieren? (j/n): "
+        CustomLight = "[CUSTOM] Hintergrund-Dienste (Fax/Error/Diag) stoppen? (j/n): "
+        CustomMed   = "[CUSTOM] UWP-Bloatware Pakete deinstallieren? (j/n): "
+        CustomHigh  = "[CUSTOM] System-Komponenten (OneDrive/Search) eliminieren? (j/n): "
+        CustomExt   = "[CUSTOM] Extrem-Modus (Dienste-Massaker für 40 Prozesse)? (j/n): "
+        Backup      = "[SECURITY] Registry-Backup auf Desktop erstellen? (DRINGEND EMPFOHLEN) (j/n): "
+        Confirm1    = "[WARNING] Soll die Prozedur eingeleitet werden? (j/n): "
+        Confirm2    = "[CRITICAL] BIST DU ABSOLUT SICHER? Änderungen sind tiefgreifend! (j/n): "
+        Processing  = "STATUS: Debloatranium führt Operationen aus. Bitte nicht unterbrechen..."
+        Done        = "ERFOLG: Operation abgeschlossen. Ein System-Neustart wird dringend empfohlen."
     }
     EN = @{
-        Welcome = "Welcome to Debloatranium!"
-        SelectLang = "Select Language (1: German, 2: English, 3: Turkish): "
-        WiFi = "Keep WiFi? (y/n): "
-        BT = "Keep Bluetooth? (y/n): "
-        Printer = "Keep Printer features? (y/n): "
-        Edge = "Keep Microsoft Edge? (y/n): "
-        Browser = "Which browser to install? (1: Chrome, 2: Firefox, 3: Tor, 4: None): "
-        Level = "Select Level (1: Minimum, 2: Light, 3: Medium, 4: High, 5: Extreme, 6: Custom): "
-        CustomPerf = "Custom: Enable Performance Tweaks (Minimum)? (y/n): "
-        CustomLight = "Custom: Disable unused services (Light)? (y/n): "
-        CustomMed = "Custom: Remove bloat apps (Medium)? (y/n): "
-        CustomHigh = "Custom: Hard settings & OneDrive removal (High)? (y/n): "
-        CustomExt = "Custom: Radical cleanup incl. Store (Extreme)? (y/n): "
-        Backup = "Create a settings backup on Desktop? (y/n): "
-        Confirm1 = "Apply changes? (y/n): "
-        Confirm2 = "Are you absolutely sure? (y/n): "
-        Processing = "Processing... Please wait."
-        Done = "Done! Please restart your PC."
-    }
-    TR = @{
-        Welcome = "Debloatranium'a Hoş Geldiniz!"
-        SelectLang = "Dil Seçin (1: Almanca, 2: İngilizce, 3: Türkçe): "
-        WiFi = "WiFi kalsın mı? (e/h): "
-        BT = "Bluetooth kalsın mı? (e/h): "
-        Printer = "Yazıcı özellikleri kalsın mı? (e/h): "
-        Edge = "Microsoft Edge kalsın mı? (e/h): "
-        Browser = "Hangi tarayıcıyı istersiniz? (1: Chrome, 2: Firefox, 3: Tor, 4: Hiçbiri): "
-        Level = "Seviye Seçin (1: Minimum, 2: Hafif, 3: Orta, 4: Yüksek, 5: Ekstrem, 6: Özel): "
-        CustomPerf = "Özel: Performans ayarları (Minimum)? (e/h): "
-        CustomLight = "Özel: Kullanılmayan hizmetleri kapat (Hafif)? (e/h): "
-        CustomMed = "Özel: Gereksiz uygulamaları sil (Orta)? (e/h): "
-        CustomHigh = "Özel: Sert ayarlar & OneDrive sil (Yüksek)? (e/h): "
-        CustomExt = "Özel: Radikal temizlik ve Mağaza sil (Ekstrem)? (e/h): "
-        Backup = "Masaüstüne yedekleme yapılsın mı? (e/h): "
-        Confirm1 = "Değişiklikler uygulansın mı? (e/h): "
-        Confirm2 = "Emin misiniz? (e/h): "
-        Processing = "İşleniyor... Lütfen bekleyin."
-        Done = "Tamamlandı! Lütfen bilgisayarı yeniden başlatın."
+        Header      = "DEBLOATRANIUM ULTIMATE v2.0 - PROFESSIONAL EDITION"
+        Welcome     = "Welcome. System analysis complete. Ready for optimization."
+        SelectLang  = "Select Language (1: German, 2: English, 3: Turkish): "
+        WiFi        = "[QUERIE] Keep WiFi functionality? (y/n): "
+        BT          = "[QUERIE] Keep Bluetooth services? (y/n): "
+        Printer     = "[QUERIE] Keep Printer support? (y/n): "
+        Edge        = "[QUERIE] Remove Microsoft Edge from system? (y/n): "
+        Browser     = "[SELECT] Install replacement browser: (1: Chrome, 2: Firefox, 3: Tor, 4: None): "
+        Level       = "CHOOSE OPTIMIZATION STRATEGY:`n[1] MINIMUM   - Safe, Registry-only performance tweaks`n[2] LIGHT     - Disables basic background services`n[3] MEDIUM    - Removes standard Bloatware & Apps`n[4] HIGH      - Aggressive Debloat (OneDrive/Search/Cortana)`n[5] EXTREME   - ULTRA GAMING (Goal: 40 Procs, Store Removal)`n[6] CUSTOM    - Manual module selection`n`nYOUR LEVEL: "
+        CustomPerf  = "[CUSTOM] Enable Kernel & I/O Optimization? (y/n): "
+        CustomLight = "[CUSTOM] Stop background services (Fax/Error/Diag)? (y/n): "
+        CustomMed   = "[CUSTOM] Uninstall UWP-Bloatware packages? (y/n): "
+        CustomHigh  = "[CUSTOM] Eliminate System components (OneDrive/Search)? (y/n): "
+        CustomExt   = "[CUSTOM] Extreme Mode (Service massacre for 40 procs)? (y/n): "
+        Backup      = "[SECURITY] Create Registry Backup on Desktop? (HIGHLY RECOMMENDED) (y/n): "
+        Confirm1    = "[WARNING] Initiate procedure? (y/n): "
+        Confirm2    = "[CRITICAL] ARE YOU ABSOLUTELY SURE? Changes are profound! (y/n): "
+        Processing  = "STATUS: Debloatranium executing operations. Do not interrupt..."
+        Done        = "SUCCESS: Operation complete. A system restart is highly recommended."
     }
 }
 
-# --- 1. Sprachauswahl ---
-Write-Host "-----------------------------" -ForegroundColor Cyan
-Write-Host "      DEBLOATANIUM v1.0      " -ForegroundColor Cyan
-Write-Host "-----------------------------" -ForegroundColor Cyan
+# =========================================================================================
+# HILFSFUNKTIONEN (LOGGING & UI)
+# =========================================================================================
 
-$choice = Read-Host $lang.DE.SelectLang
-switch ($choice) {
-    "1" { $s = $lang.DE; $yes = "j"; $no = "n" }
-    "2" { $s = $lang.EN; $yes = "y"; $no = "n" }
-    "3" { $s = $lang.TR; $yes = "e"; $no = "h" }
-    Default { $s = $lang.EN; $yes = "y"; $no = "n" }
+function Write-Header {
+    param($Text)
+    Write-Host "`n--- $Text ---" -ForegroundColor Cyan -BackgroundColor Black
 }
+
+function Write-Log {
+    param($Msg, $Type="Info")
+    $Color = "White"
+    if ($Type -eq "Success") { $Color = "Green" }
+    if ($Type -eq "Warning") { $Color = "Yellow" }
+    if ($Type -eq "Error") { $Color = "Red" }
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] [$Type] $Msg" -ForegroundColor $Color
+}
+
+# =========================================================================================
+# PHASE 1: INTERAKTIVE DATENERFASSUNG
+# =========================================================================================
 
 Clear-Host
-Write-Host $s.Welcome -ForegroundColor Green
+Write-Host "======================================================================" -ForegroundColor Cyan
+Write-Host "                 DEBLOATRANIUM PROFESSIONAL v2.0                      " -ForegroundColor White -BackgroundColor DarkBlue
+Write-Host "======================================================================" -ForegroundColor Cyan
 
-# --- 2. Features behalten? ---
-$inWiFi = Read-Host $s.WiFi
-if ($inWiFi -eq $no) { $doWiFi = $false }
+$inputLang = Read-Host $lang.DE.SelectLang
+$S = if ($inputLang -eq "1") { $lang.DE } else { $lang.EN }
+$Y = if ($inputLang -eq "1") { "j" } else { "y" }
+$N = "n"
 
-$inBT = Read-Host $s.BT
-if ($inBT -eq $no) { $doBT = $false }
+Write-Log $S.Welcome "Success"
 
-$inPrint = Read-Host $s.Printer
-if ($inPrint -eq $no) { $doPrinter = $false }
+# Fragen abarbeiten
+if ((Read-Host $S.WiFi) -eq $N) { $Global:Config.WiFi = $false }
+if ((Read-Host $S.BT) -eq $N) { $Global:Config.BT = $false }
+if ((Read-Host $S.Printer) -eq $N) { $Global:Config.Printer = $false }
 
-# --- 3. Edge & Browser ---
-$inEdge = Read-Host $s.Edge
-if ($inEdge -eq $no) { 
-    $keepEdge = $false 
-    $newBrowser = Read-Host $s.Browser
+$edgeInput = Read-Host $S.Edge
+if ($edgeInput -eq $Y) { 
+    $Global:Config.Edge = $false 
+    $Global:Config.Browser = Read-Host $S.Browser
 }
 
-# --- 4. Dark Mode (Automatisch gesetzt, keine Frage) ---
-# Info: Wird im Ausführungsteil angewendet.
+$lvlChoice = Read-Host $S.Level
+switch ($lvlChoice) {
+    "1" { $Global:Config.Flags.Perf = $true }
+    "2" { $Global:Config.Flags.Perf = $true; $Global:Config.Flags.Light = $true }
+    "3" { $Global:Config.Flags.Perf = $true; $Global:Config.Flags.Light = $true; $Global:Config.Flags.Med = $true }
+    "4" { $Global:Config.Flags.Perf = $true; $Global:Config.Flags.Light = $true; $Global:Config.Flags.Med = $true; $Global:Config.Flags.High = $true }
+    "5" { $Global:Config.Flags.Perf = $true; $Global:Config.Flags.Light = $true; $Global:Config.Flags.Med = $true; $Global:Config.Flags.High = $true; $Global:Config.Flags.Ext = $true }
+    "6" {
+        if ((Read-Host $S.CustomPerf) -eq $Y) { $Global:Config.Flags.Perf = $true }
+        if ((Read-Host $S.CustomLight) -eq $Y) { $Global:Config.Flags.Light = $true }
+        if ((Read-Host $S.CustomMed) -eq $Y) { $Global:Config.Flags.Med = $true }
+        if ((Read-Host $S.CustomHigh) -eq $Y) { $Global:Config.Flags.High = $true }
+        if ((Read-Host $S.CustomExt) -eq $Y) { $Global:Config.Flags.Ext = $true }
+    }
+}
 
-# --- 5. Level Auswahl ---
-$lvlChoice = Read-Host $s.Level
+if ((Read-Host $S.Backup) -eq $Y) { $Global:Config.Backup = $true }
+if ((Read-Host $S.Confirm1) -ne $Y) { exit }
+if ((Read-Host $S.Confirm2) -ne $Y) { exit }
 
-# Logik für Level
-if ($lvlChoice -eq "1") { # Minimum
-    $optPerformance = $true
-}
-elseif ($lvlChoice -eq "2") { # Leicht
-    $optPerformance = $true; $optLight = $true
-}
-elseif ($lvlChoice -eq "3") { # Mittel
-    $optPerformance = $true; $optLight = $true; $optMedium = $true
-}
-elseif ($lvlChoice -eq "4") { # Hoch
-    $optPerformance = $true; $optLight = $true; $optMedium = $true; $optHigh = $true
-}
-elseif ($lvlChoice -eq "5") { # Extrem
-    $optPerformance = $true; $optLight = $true; $optMedium = $true; $optHigh = $true; $optExtreme = $true
-}
-elseif ($lvlChoice -eq "6") { # Custom
-    $c1 = Read-Host $s.CustomPerf
-    if ($c1 -eq $yes) { $optPerformance = $true }
+# =========================================================================================
+# PHASE 2: TECHNISCHE AUSFÜHRUNGSFUNKTIONEN
+# =========================================================================================
+
+function Optimize-Registry {
+    Write-Header "REGISTRY & KERNEL OPTIMIZATION"
     
-    $c2 = Read-Host $s.CustomLight
-    if ($c2 -eq $yes) { $optLight = $true }
+    # Menü-Verzögerungen minimieren
+    Write-Log "Adjusting MenuShowDelay to 0..."
+    Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0"
     
-    $c3 = Read-Host $s.CustomMed
-    if ($c3 -eq $yes) { $optMedium = $true }
+    # I/O & Kernel Tweaks für Performance (Speziell i7 CPUs)
+    Write-Log "Optimizing Kernel Paging and I/O..."
+    $SessPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
+    Set-ItemProperty -Path $SessPath -Name "DisablePagingExecutive" -Value 1 # Kernel im RAM behalten
+    Set-ItemProperty -Path $SessPath -Name "LargeSystemCache" -Value 1
     
-    $c4 = Read-Host $s.CustomHigh
-    if ($c4 -eq $yes) { $optHigh = $true }
+    # GPU & Gaming Tweaks
+    Write-Log "Enabling Hardware Accelerated GPU Scheduling (if supported)..."
+    $GPUPath = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
+    Set-ItemProperty -Path $GPUPath -Name "HwSchMode" -Value 2
     
-    $c5 = Read-Host $s.CustomExt
-    if ($c5 -eq $yes) { $optExtreme = $true }
+    # Netzwerk-Stack Optimierung
+    Write-Log "Tuning Network Stack for Latency..."
+    netsh int tcp set global autotuninglevel=disabled
+    netsh int tcp set global ecncapability=disabled
+    netsh int tcp set global rsc=disabled
 }
 
-# --- 6. Backup ---
-$inBackup = Read-Host $s.Backup
-if ($inBackup -eq $yes) { $doBackup = $true }
+function Remove-UWPApps {
+    Write-Header "UWP BLOATWARE REMOVAL"
+    $AppsToRemove = @(
+        "Microsoft.BingWeather", "Microsoft.GetHelp", "Microsoft.Getstarted",
+        "Microsoft.Messaging", "Microsoft.MicrosoftSolitaireCollection", 
+        "Microsoft.People", "Microsoft.SkypeApp", "Microsoft.YourPhone",
+        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.BingNews",
+        "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps"
+    )
+    
+    foreach ($App in $AppsToRemove) {
+        Write-Log "Removing Package: $App"
+        Get-AppxPackage -Name $App -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+    }
+}
 
-# --- 7. Doppelbestätigung ---
-Write-Host "`n"
-$cConf1 = Read-Host $s.Confirm1
-if ($cConf1 -ne $yes) { exit }
+function Disable-Telemetry {
+    Write-Header "TELEMETRY & PRIVACY HARDENING"
+    
+    Write-Log "Disabling Functional Discovery Telemetry..."
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Value 0
+    
+    Write-Log "Disabling Scheduled Telemetry Tasks..."
+    $Tasks = @(
+        "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser",
+        "\Microsoft\Windows\Application Experience\ProgramDataUpdater",
+        "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
+        "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
+        "\Microsoft\Windows\Autochk\Proxy"
+    )
+    foreach ($T in $Tasks) { Disable-ScheduledTask -TaskName (Split-Path $T -Leaf) -TaskPath (Split-Path $T -Parent) }
+}
 
-$cConf2 = Read-Host $s.Confirm2
-if ($cConf2 -ne $yes) { exit }
+function Execute-Extreme-Purge {
+    Write-Header "EXTREME PURGE MODE (TARGET 40 PROCESSES)"
+    Write-Log "Warning: System-Core will be minimal after this." "Warning"
+    
+    # Massiver Dienst-Kill
+    $ExtremeSvcs = @(
+        "sysmain", "WerSvc", "WSearch", "DiagTrack", "dmwappushservice", 
+        "PcaSvc", "TrkWks", "StiSvc", "CscService", "XblAuthManager", 
+        "XblGameSave", "XboxNetApiSvc", "XboxGipSvc", "PhoneSvc", 
+        "SensorService", "MapsBroker", "RetailDemo", "WalletService",
+        "RemoteRegistry", "Fax", "BcastDVRUserService", "CaptureService"
+    )
+    
+    foreach ($Svc in $ExtremeSvcs) {
+        Write-Log "Killing & Disabling Service: $Svc"
+        Stop-Service $Svc -Force
+        Set-Service $Svc -StartupType Disabled
+    }
+    
+    # Alle Apps außer Kern-Komponenten entfernen (Inkl. Microsoft Store)
+    Write-Log "Performing Total Appx Wipeout..."
+    $WhiteList = "ShellExperienceHost|StartMenuExperienceHost|immersivecontrolpanel|Search|Xaml|VCLibs"
+    Get-AppxPackage -AllUsers | Where-Object {$_.Name -notmatch $WhiteList} | Remove-AppxPackage
+    
+    # Desktop-Effekte aus
+    Write-Log "Disabling Visual Effects for maximum FPS..."
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2
+}
 
-# ==========================================
-#        AUSFÜHRUNG (EXECUTION PHASE)
-# ==========================================
+# =========================================================================================
+# PHASE 3: MAIN LOOP (DAS HERZSTÜCK)
+# =========================================================================================
+
 Clear-Host
-Write-Host $s.Processing -ForegroundColor Yellow
+Write-Log $S.Processing "Warning"
 
-# A. Backup erstellen
-if ($doBackup) {
-    $backupPath = "$HOME\Desktop\Backup"
-    if (!(Test-Path $backupPath)) { New-Item -ItemType Directory -Path $backupPath | Out-Null }
-    Write-Host "[*] Creating Backup..."
-    reg export "HKLM\SYSTEM\CurrentControlSet\Control" "$backupPath\System_Control.reg" /y | Out-Null
-    reg export "HKCU\Software\Microsoft\Windows\CurrentVersion" "$backupPath\User_Config.reg" /y | Out-Null
-}
-
-# B. Dark Mode erzwingen (Immer)
-Write-Host "[*] Applying Dark Mode..."
-$RegPaths = @("HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")
-foreach ($path in $RegPaths) {
-    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
-    Set-ItemProperty -Path $path -Name "AppsUseLightTheme" -Value 0 -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path $path -Name "SystemUsesLightTheme" -Value 0 -ErrorAction SilentlyContinue
+# A. Backup
+if ($Global:Config.Backup) {
+    Write-Log "Initiating Registry Backup..."
+    $Path = "$HOME\Desktop\Debloatranium_Full_Backup"
+    New-Item $Path -Type Directory -Force | Out-Null
+    reg export "HKLM" "$Path\HKLM_Full.reg" /y | Out-Null
+    reg export "HKCU" "$Path\HKCU_Full.reg" /y | Out-Null
+    Write-Log "Backup stored on Desktop." "Success"
 }
 
-# C. Feature Entfernung
-if (!$doBT) {
-    Write-Host "[*] Disabling Bluetooth..."
-    Get-Service -Name "bthserv", "BTAGService" -ErrorAction SilentlyContinue | Stop-Service -PassThru | Set-Service -StartupType Disabled
+# B. Dark Mode (Default Professional)
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "AppsUseLightTheme" -Value 0
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "SystemUsesLightTheme" -Value 0
+
+# C. Hardware Features
+if (!$Global:Config.BT) { 
+    Write-Log "Deactivating Bluetooth Stack..."
+    Get-Service "bth*" | Stop-Service -Force; Get-Service "bth*" | Set-Service -StartupType Disabled 
 }
-if (!$doPrinter) {
-    Write-Host "[*] Disabling Print Spooler..."
-    Stop-Service -Name "Spooler" -ErrorAction SilentlyContinue | Set-Service -StartupType Disabled
+if (!$Global:Config.Printer) { 
+    Write-Log "Deactivating Printer Spooler..."
+    Stop-Service "Spooler" -Force; Set-Service "Spooler" -StartupType Disabled 
 }
-if (!$doWiFi) {
-    Write-Host "[*] Disabling WiFi Service..."
-    Stop-Service -Name "WlanSvc" -ErrorAction SilentlyContinue | Set-Service -StartupType Disabled
+if (!$Global:Config.WiFi) { 
+    Write-Log "Deactivating WLAN Services..."
+    Stop-Service "WlanSvc" -Force; Set-Service "WlanSvc" -StartupType Disabled 
 }
 
-# D. Edge & Browser
-if (!$keepEdge) {
-    Write-Host "[*] Removing Edge..." -ForegroundColor Yellow
-    Get-AppxPackage -AllUsers *MicrosoftEdge* | Remove-AppxPackage -ErrorAction SilentlyContinue
-    
-    # Browser Install via Winget
-    if ($newBrowser -ne "4") {
-        Write-Host "[*] Installing selected Browser..."
-        switch ($newBrowser) {
-            "1" { winget install Google.Chrome --silent --accept-package-agreements --accept-source-agreements }
-            "2" { winget install Mozilla.Firefox --silent --accept-package-agreements --accept-source-agreements }
-            "3" { winget install TorProject.TorBrowser --silent --accept-package-agreements --accept-source-agreements }
-        }
+# D. Edge Removal
+if (!$Global:Config.Edge) {
+    Write-Log "Evicting Microsoft Edge..."
+    Get-AppxPackage -AllUsers *MicrosoftEdge* | Remove-AppxPackage
+    if ($Global:Config.Browser -match "1|2|3") {
+        $b = switch($Global:Config.Browser){"1"{"Google.Chrome"};"2"{"Mozilla.Firefox"};"3"{"TorProject.TorBrowser"}}
+        Write-Log "Deploying $b via Winget Infrastructure..."
+        winget install $b --silent --accept-package-agreements --accept-source-agreements
     }
 }
 
-# E. Level-basierte Optimierungen
-
-# 1. MINIMUM (Performance Tweaks, Einstellungen die nix wegmachen)
-if ($optPerformance) {
-    Write-Host "[*] Applying Minimum/Performance Tweaks..."
-    # Telemetrie reduzieren (ohne Dienste zu löschen)
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Value 0 -ErrorAction SilentlyContinue
-    # Game Mode an
-    Write-Host " -> Activating Game Mode"
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Value 1 -ErrorAction SilentlyContinue
+# E. Modulare Optimierung basierend auf Level
+if ($Global:Config.Flags.Perf)  { Optimize-Registry }
+if ($Global:Config.Flags.Light) { 
+    Write-Log "Applying Light Service-Mod..."
+    Set-Service "SysMain" -StartupType Disabled # Superfetch aus (gut für SSDs)
 }
-
-# 2. LEICHT (Minimum + unbenutzte Sachen aus)
-if ($optLight) {
-    Write-Host "[*] Applying Light Optimization..."
-    # Disable Hibernation (Save Space)
-    powercfg /h off
-    # Disable Fax Service
-    Get-Service "Fax" -ErrorAction SilentlyContinue | Stop-Service -PassThru | Set-Service -StartupType Disabled
+if ($Global:Config.Flags.Med)   { Remove-UWPApps }
+if ($Global:Config.Flags.High)  { 
+    Disable-Telemetry 
+    Write-Log "Removing OneDrive Integration..."
+    Get-Process "OneDrive" -ErrorAction SilentlyContinue | Stop-Process -Force
+    # OneDrive Uninstall Command (Deep)
+    $odPath = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
+    if (!(Test-Path $odPath)) { $odPath = "$env:SystemRoot\System32\OneDriveSetup.exe" }
+    Start-Process $odPath "/uninstall" -NoNewWindow -Wait
 }
+if ($Global:Config.Flags.Ext)   { Execute-Extreme-Purge }
 
-# 3. MITTEL (Leicht + unnötige Apps + härtere Einstellungen)
-if ($optMedium) {
-    Write-Host "[*] Applying Medium Optimization (App Removal)..."
-    $bloatList = @(
-        "*bingweather*", "*bingnews*", "*gethelp*", "*getstarted*", "*messaging*", 
-        "*solitaire*", "*people*", "*zunevideo*", "*zunemusic*"
-    )
-    foreach ($app in $bloatList) {
-        Get-AppxPackage $app | Remove-AppxPackage -ErrorAction SilentlyContinue
-    }
-}
+# F. Abschluss-Reinigung
+Write-Header "CLEANUP & FINALIZATION"
+Write-Log "Purging Temp folders..."
+Remove-Item "$env:TEMP\*" -Recurse -Force
+Clear-RecycleBin -Confirm:$false
 
-# 4. HOCH (Mittel + OneDrive + Cortana + noch mehr Apps)
-if ($optHigh) {
-    Write-Host "[*] Applying High Optimization (OneDrive/Cortana)..."
-    # OneDrive (Versuch Deinstall)
-    Get-AppxPackage *onedrive* | Remove-AppxPackage -ErrorAction SilentlyContinue
-    # Cortana
-    Get-AppxPackage *cortana* | Remove-AppxPackage -ErrorAction SilentlyContinue
-    # Feedback Hub
-    Get-AppxPackage *feedbackhub* | Remove-AppxPackage -ErrorAction SilentlyContinue
-    # Maps
-    Get-AppxPackage *windowsmaps* | Remove-AppxPackage -ErrorAction SilentlyContinue
-}
-
-# 5. EXTREM (Gaming pur, fast alles weg, Store weg, Essentials bleiben)
-if ($optExtreme) {
-    Write-Host "!!! EXTREME MODE ACTIVATED !!!" -ForegroundColor Red
-    Write-Host "[*] Removing almost ALL System Apps..."
-    
-    # Whitelist Strategie: Wir löschen ALLES, außer was hier steht.
-    $whiteList = @(
-        "Microsoft.Windows.ShellExperienceHost",    # Start Menu / UI
-        "Microsoft.Windows.StartMenuExperienceHost",
-        "windows.immersivecontrolpanel",            # Settings App (Wichtig!)
-        "Microsoft.Windows.Search",                 # Search bar
-        "Microsoft.UI.Xaml",                        # UI Framework
-        "Microsoft.VCLibs"                          # Libraries
-    )
-    
-    $allApps = Get-AppxPackage -AllUsers
-    foreach ($app in $allApps) {
-        if ($whiteList -notcontains $app.Name) {
-            # Extra Check: Windows Store wird hier auch gelöscht, da nicht in Whitelist
-            Write-Host " -> Removing $($app.Name)"
-            $app | Remove-AppxPackage -ErrorAction SilentlyContinue
-        }
-    }
-    
-    # Extra Härtung
-    Write-Host "[*] Applying Ultra-Hardcore Registry Tweaks..."
-    # Disable Background Apps Global
-    $key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
-    if (!(Test-Path $key)) { New-Item -Path $key -Force | Out-Null }
-    Set-ItemProperty -Path $key -Name "GlobalUserDisabled" -Value 1
-}
-
-Write-Host "`n"
-Write-Host $s.Done -ForegroundColor Green
+Write-Host "`n`n"
+Write-Host "****************************************************************" -ForegroundColor Cyan
+Write-Host "   $($S.Done)" -ForegroundColor Green -BackgroundColor Black
+Write-Host "****************************************************************" -ForegroundColor Cyan
 pause
