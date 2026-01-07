@@ -43,7 +43,7 @@ iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/ma
 |   3️⃣ | **Medium**  | Light + removes obvious bloatware (Weather, News, Solitaire).                                              |
 |   4️⃣ | **High**    | Medium + removes OneDrive, Cortana, Maps & Feedback Hub.                                                   |
 |   5️⃣ | **Extreme** | ⚠️ For Gaming / Pros only. Removes almost all system apps and the Microsoft Store. Only essentials remain. |
-|   6️⃣ | **Zero**  | The whole System features are getting deleted/deaktivated.                                                                 |
+|   6️⃣ | **Zero**  | The whole System features are getting deleted/deactivated.                                                                 |
 
 * Manually choose categories
 * Step-by-step confirmations
