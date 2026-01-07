@@ -6,7 +6,7 @@
     Ein hochprofessionelles, objektorientiertes Optimierungs-Framework für Windows.
     Entwickelt für maximale System-Transparenz, minimale Latenz und universelle Kompatibilität.
     
-    FIX: Syntax-Fehler in Klassen-Parametern behoben.
+    FIX: Syntax-Fehler in Klassen-Parametern behoben (Klammern um Typen korrigiert).
     OPTIMIERUNG: Dynamische Profile für High-Performance Desktop (i7-4790K Klasse) integriert.
     
     (c) 2024-2026 Emre1001. Alle Rechte vorbehalten.
@@ -141,7 +141,7 @@ class SecurityVault {
 # =========================================================================================
 
 class KernelEngine {
-    # FIXED: Parameter-Typ muss in Klammern stehen
+    # FIX: Typ-Deklaration muss in Klammern stehen
     static [void] ApplyTuning([SystemInventory]$Inv) {
         [DebloatLogger]::Log("Konfiguriere Kernel & CPU-Scheduling...", "STAGE")
         
@@ -156,9 +156,8 @@ class KernelEngine {
         }
         reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d 1 /f | Out-Null
 
-        # Deaktiviere CPU-Mitigationen für ältere Architekturen (wie Haswell), falls gewünscht
-        # Dies erhöht die Performance auf i7-4790K massiv.
-        [DebloatLogger]::Log("Optimiere CPU-Mitigationen für Performance-Gewinn...", "CONFIG")
+        # Deaktiviere CPU-Mitigationen für ältere Architekturen (wie i7-4790K / Haswell)
+        [DebloatLogger]::Log("Optimiere CPU-Mitigationen für maximale Gaming-Performance...", "CONFIG")
         $MemPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
         Set-ItemProperty -Path $MemPath -Name "FeatureSettingsOverride" -Value 3 -Type DWord
         Set-ItemProperty -Path $MemPath -Name "FeatureSettingsOverrideMask" -Value 3 -Type DWord
@@ -166,7 +165,7 @@ class KernelEngine {
 }
 
 class FileSystemEngine {
-    # FIXED: Parameter-Typ muss in Klammern stehen
+    # FIX: Typ-Deklaration muss in Klammern stehen
     static [void] Apply([bool]$IsSSD) {
         [DebloatLogger]::Log("Optimiere NTFS & Disk-I/O...", "STAGE")
         
