@@ -38,12 +38,12 @@ iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/ma
 
 | Level | Name        | Description                                                                                                |
 | ----: | ----------- | ---------------------------------------------------------------------------------------------------------- |
-|   1️⃣ | **Minimum** | Performance tweaks only (Telemetry reduced, Game Mode enabled). No apps are removed.                       |
+|   1️⃣ | **Minimal** | Performance tweaks only (Telemetry reduced, Game Mode enabled). No apps are removed.                       |
 |   2️⃣ | **Light**   | Minimum + disables unused services (Fax, Hibernation).                                                     |
 |   3️⃣ | **Medium**  | Light + removes obvious bloatware (Weather, News, Solitaire).                                              |
 |   4️⃣ | **High**    | Medium + removes OneDrive, Cortana, Maps & Feedback Hub.                                                   |
 |   5️⃣ | **Extreme** | ⚠️ For Gaming / Pros only. Removes almost all system apps and the Microsoft Store. Only essentials remain. |
-|   6️⃣ | **Custom**  | Manually choose which categories to apply.                                                                 |
+|   6️⃣ | **Zero**  | The whole System features are getting deleted/deaktivated.                                                                 |
 
 * Manually choose categories
 * Step-by-step confirmations
