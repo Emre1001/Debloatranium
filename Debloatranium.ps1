@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Debloatranium 2025 - Professional Windows Debloat & Browser Installer
-    Version: 1.1.0
+    Version: 1.2.0
     Author: Emre1001 (Optimized for i7-4790k / 1050 Ti)
 
 .DESCRIPTION
@@ -76,23 +76,23 @@ function Set-RestorePoint {
     Write-Log "Versuche System-Wiederherstellungspunkt zu erstellen..."
     try {
         Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
-        Checkpoint-Computer -Description "Debloatranium_PreExecution" -RestorePointType "MODIFY_SETTINGS"
+        # Wir unterdrücken die spezifische Warnung über die Häufigkeit, da wir manuell prüfen
+        Checkpoint-Computer -Description "Debloatranium_PreExecution" -RestorePointType "MODIFY_SETTINGS" -ErrorAction SilentlyContinue
         
-        # Verifizierung
+        # Verifizierung: Schauen ob IRGENDEIN Punkt existiert (da Windows oft blockt, wenn einer erst kürzlich erstellt wurde)
         $LastPoint = Get-ComputerRestorePoint | Select-Object -Last 1
-        if ($LastPoint.Description -eq "Debloatranium_PreExecution") {
-            Write-Log "Wiederherstellungspunkt erfolgreich verifiziert."
+        if ($LastPoint) {
+            Write-Log "Ein Wiederherstellungspunkt wurde gefunden/verifiziert (Stand: $($LastPoint.CreationTime))."
             return $true
         }
     } catch {
         Write-Log "Fehler beim Erstellen des Wiederherstellungspunkts: $($_.Exception.Message)" "WARN"
     }
     
-    if ($Interactive -or $true) {
-        $Choice = Read-Host "Wiederherstellungspunkt konnte nicht erstellt werden. Trotzdem fortfahren? (y/n)"
-        return ($Choice -eq 'y')
-    }
-    return $false
+    # Wenn wir hier landen, konnte kein neuer Punkt erstellt werden (z.B. wegen des 24h Limits)
+    Write-Log "Hinweis: Windows verhindert oft die Erstellung mehrerer Punkte innerhalb von 24h." "WARN"
+    $Choice = Read-Host "Kein neuer Punkt erstellt. Mit vorhandenen Sicherungen fortfahren? (y/n)"
+    return ($Choice -eq 'y')
 }
 
 # --- DEBLOAT MODULE DEFINITIONEN ---
@@ -152,11 +152,14 @@ function Invoke-DebloatEngine {
         return
     }
 
-    # Sicherheits-Check: Falls -Confirm vergessen wurde, fragen wir im interaktiven Modus nach
-    if (-not $Confirm) {
+    # Sicherheits-Check: Falls -Confirm vergessen wurde, fragen wir jetzt aktiv nach
+    $CurrentConfirm = $Confirm
+    if (-not $CurrentConfirm) {
         Write-Log "WARNUNG: -Confirm Schalter fehlt!" "WARN"
         $ManualConfirm = Read-Host "Möchten Sie destruktive Aktionen manuell freischalten? (y/n)"
-        if ($ManualConfirm -ne 'y') {
+        if ($ManualConfirm -eq 'y') {
+            $CurrentConfirm = $true
+        } else {
             Write-Log "Kritisch: Keine Bestätigung erhalten. Destruktive Aktionen blockiert." "ERROR"
             return
         }
@@ -166,7 +169,8 @@ function Invoke-DebloatEngine {
     
     foreach ($Task in $ActionQueue) {
         $Proceed = $true
-        if ($Interactive -or (-not $Confirm)) {
+        # Wir erzwingen Interaktivität, wenn -Confirm nicht von Anfang an dabei war ODER -Interactive gesetzt ist
+        if ($Interactive -or ($Confirm -eq $false)) {
             Write-Host "`n[BESTÄTIGUNG ERFORDERLICH]" -ForegroundColor Magenta
             Write-Host "Aktion: $($Task.Description)"
             $Ans = Read-Host "Ausführen? (y/n)"
@@ -195,18 +199,19 @@ Write-Host @"
 
 Test-AdminPrivileges
 
+# Prüfung des Wiederherstellungspunkts mit Fehler-Abfangung für das 24h Limit
 if (-not (Set-RestorePoint)) {
-    Write-Log "Abbruch: Sicherheits-Wiederherstellungspunkt nicht vorhanden." "ERROR"
+    Write-Log "Abbruch durch Benutzer: Kein Wiederherstellungspunkt verfügbar." "ERROR"
     exit
 }
 
 # 1. Planung
 Plan-AppxDebloat
 Plan-ServiceOptimizations
-if ($Interactive -or $true) {
-    $InBrowser = Read-Host "Optional: Browser-Installation planen? (y/n)"
-    if ($InBrowser -eq 'y') { Plan-BrowserInstall }
-}
+
+# Browser-Planung abfragen
+$InBrowser = Read-Host "Optional: Browser-Installation planen? (y/n)"
+if ($InBrowser -eq 'y') { Plan-BrowserInstall }
 
 # 2. Ausführung
 Invoke-DebloatEngine
