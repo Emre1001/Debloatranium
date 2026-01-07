@@ -1,125 +1,100 @@
-# Debloatranium 2025 — Interactive Guide (English)
+☢️ Debloatranium
 
-Professional Windows Debloat & Browser Installer — interactive, safety-hardened and matched to the included script.
+The ultimate Windows Debloater & Optimizer for every PC. > Powerful. Customizable. Multilingual.
 
-## Summary
+🌍 About the Project
 
-Debloatranium 2025 automates common Windows 10/11 cleanup tasks and offers optional browser installation. This repository includes a safety-hardened PowerShell script that implements DryRun, per-action confirmations, restore-point verification, whitelist-based extreme removals, planned-action export, and logging. Read the Safety & Best Practices section before running.
+Debloatranium is an interactive PowerShell tool designed to accelerate and clean up your Windows experience. It removes bloatware, optimizes privacy, and tailors Windows exactly to your needs—whether for gaming, office work, or a minimal setup.
 
----
+✨ Highlights
 
-## Quickstart — Interactive (recommended)
+🗣️ Multilingual: Supports German 🇩🇪, English 🇺🇸, and Turkish 🇹🇷.
 
-1. Open PowerShell as Administrator.
-2. Download and run the script from the repository (interactive prompts & per-action confirmations):
+🌐 Browser Choice: Removes Edge (optional) and automatically installs Chrome, Firefox, or Tor.
 
-# Fetch and execute the latest script (review before running)
-```powershell
-iwr -UseBasicParsing https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1 | iex
-```
+🌙 Style: Automatically enables Dark Mode.
 
-If you prefer to run a downloaded copy instead of piping from the web, download Debloatranium.ps1, inspect it, then run:
+🛡️ Security: Built-in Registry Backup feature.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\Debloatranium.ps1 -Interactive -Confirm
-```
+🎮 Gaming Ready: Special "Extreme" mode for maximum FPS.
 
----
+🚀 Installation (Quick Start)
 
-## Interactive Flow — what to expect
+Start PowerShell as Administrator and run the following command. The script will load and start directly:
 
-- Language and safety messages are shown.
-- Script attempts to create and verify a system restore point before destructive operations.
-- The script collects a planned action list and exports it to a JSON file for review.
-- In interactive mode (-Interactive) the script prompts for confirmation before each destructive action.
-- After confirmation the script executes the action (unless -DryRun was used).
-- At the end the script prints the log location and the path to the exported planned actions JSON.
+iwr -UseBasicParsing [https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1](https://raw.githubusercontent.com/Emre1001/Debloatranium/main/Debloatranium.ps1) | iex
 
----
 
-## Important Flags (script parameters)
+Note: You will be guided through an interactive menu. No changes are made until you confirm them.
 
-- -DryRun
-  - Simulates all planned actions and exports them to a JSON file. No destructive action is executed.
+🎚️ Optimization Levels
 
-- -Confirm
-  - Required to allow destructive actions. Without -Confirm, the script will NOT perform destructive operations. Use together with -Interactive for per-action prompts.
+Choose the level that fits your system:
 
-- -Interactive
-  - Ask for confirmation before each destructive step.
+Level
 
-- -PlannedExportPath
-  - Optional path/file name for the exported JSON (defaults to a timestamped file in the current folder).
+Name
 
-Examples:
+Description
 
-- Preview planned changes (no changes made):
+1️⃣
 
-```powershell
-.\Debloatranium.ps1 -DryRun
-```
+Minimum
 
-- Interactive execution with per-action prompts:
+Performance tweaks only (Telemetry reduced, GameMode on). No apps are deleted.
 
-```powershell
-.\Debloatranium.ps1 -Confirm -Interactive
-```
+2️⃣
 
-- Non-interactive execution (destructive allowed because -Confirm provided):
+Light
 
-```powershell
-.\Debloatranium.ps1 -Confirm
-```
+Same as Minimum + disables unused services (Fax, Hibernation).
 
----
+3️⃣
 
-## Custom & Extreme Actions
+Medium
 
-- Extreme removals are whitelist-based: the script will only remove packages explicitly listed in the script's whitelist. There are no wildcard "*Microsoft.*" removals.
-- Custom actions (where supported) require explicit -Confirm to run in non-interactive automation.
-- When using custom or extreme modes, always run -DryRun first and verify the exported JSON.
+Same as Light + removes obvious bloatware (Weather, News, Solitaire).
 
----
+4️⃣
 
-## Restore Points and Backups
+High
 
-- The script attempts to create a system restore point and verifies its creation. If creation cannot be verified, the script will abort unless you explicitly allow continuation (by using -Confirm and interactive acknowledgement).
-- Despite the restore point attempt, create a full backup or system image before running destructive profiles on production machines.
+Same as Medium + removes OneDrive, Cortana, Maps & Feedback Hub.
 
----
+5️⃣
 
-## Browser Installation
+Extreme
 
-- Browser installers are optional and handled carefully: downloads are skipped when -DryRun is used and installer checksums are supported (replace checksum placeholders with real hashes before enabling auto-install).
-- If you want automatic browser installation, configure the Install-Browser section of the script (URLs and SHA256) and call the installer functions, or run interactively and accept the prompts.
+⚠️ For Gaming/Pros only! Removes almost ALL system apps and the Microsoft Store. Only essentials remain.
 
----
+6️⃣
 
-## Logs and Action Export
+Custom
 
-- The script logs to a timestamped log file and exports planned/executed actions to a JSON file. Review these files after a run to audit changes.
+Choose manually which categories you want to apply.
 
----
+⚙️ Features in Detail
 
-## Best Practices — step-by-step
+The script asks you step-by-step:
 
-1. Review the script source. Do not run code you don't understand.
-2. Run a DryRun and review the exported planned actions JSON.
-3. Test in a VM with a snapshot/restore point.
-4. Ensure System Restore is enabled or create other full backups.
-5. Run interactively first: `.\Debloatranium.ps1 -Interactive -Confirm` and confirm each action.
-6. For automation, use `-Confirm` and monitor logs and the exported JSON.
+Language: Choose your preferred language.
 
----
+Hardware Features: Keep or disable WiFi, Bluetooth, and Printer Spooler.
 
-## Contributing
+Browser: Decide the fate of Microsoft Edge.
 
-- Add new debloat modules as functions named `Debloat-<Module>` and register them in the script's profile mapping.
-- Add additional languages by extending the script's localization dictionary.
-- Add SHA256 checksums for installers and configure URLs in the browser installer section.
+Backup: Create a backup of your current settings directly on the Desktop.
 
----
+Security: Double confirmation before execution.
 
-IMPORTANT: Use at your own risk (auf eigene Gefahr).
+⚠️ Disclaimer
 
-This tool modifies system components. Even with the safety features in place, accidental damage can occur. Always use -DryRun first, test in a VM, and have reliable backups before performing destructive actions.
+USE AT YOUR OWN RISK.
+
+This script makes deep changes to the Windows system configuration. Although it has been tested extensively and includes safety mechanisms (like the backup function), the developer cannot guarantee the functionality of your system after application.
+
+The Extreme Mode deletes the Microsoft Store and many system components. This is intentional but may limit certain Windows functions.
+
+It is strongly recommended to create a System Restore Point or use the integrated Registry Backup feature before using "Extreme" mode or making general changes.
+
+Made with ❤️ by Emre1001
