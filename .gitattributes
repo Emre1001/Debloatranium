@@ -1,0 +1,11 @@
+# Normalize line endings — avoids CRLF warnings & keeps CI consistent
+* text=auto eol=lf
+
+# Binary assets (never normalize)
+*.png binary
+*.ico binary
+*.icns binary
+*.svg binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
