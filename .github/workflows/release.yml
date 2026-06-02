@@ -1,6 +1,7 @@
 name: Release
 
-# Push a version tag to build + publish:  git tag v1.0.0 && git push origin v1.0.0
+# Push a version tag to build + publish the portable .exe:
+#   git tag v1.0.0 && git push origin v1.0.0
 on:
   push:
     tags:
@@ -32,21 +33,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build + publish release
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Debloatranium ${{ github.ref_name }}"
-          releaseBody: "☢️ Download the installer (.msi / setup .exe) below. Run as Administrator."
-          releaseDraft: false
-          prerelease: false
+      - name: Build portable .exe (no installer)
+        run: npm run tauri build -- --no-bundle
 
-      - name: Upload portable .exe
+      - name: Publish portable release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
+          name: "Debloatranium ${{ github.ref_name }}"
+          body: |
+            ☢️ **Debloatranium ${{ github.ref_name }}** — portable, no install.
+
+            Download **`Debloatranium.exe`** below and run as **Administrator**.
+            (Needs the WebView2 runtime — preinstalled on Windows 10 1803+ / 11.)
           files: src-tauri/target/release/Debloatranium.exe
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
