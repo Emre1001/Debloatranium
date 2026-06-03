@@ -35,12 +35,14 @@ import {
   HardDrive,
   PieChart,
   ShieldCheck,
+  Sparkles,
+  Rocket,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Lang } from "../i18n";
 
-export type Purpose = "gaming" | "browsers" | "creator" | "developer" | "communication" | "utilities";
-export const PURPOSES: Purpose[] = ["gaming", "browsers", "creator", "developer", "communication", "utilities"];
+export type Purpose = "gaming" | "browsers" | "creator" | "developer" | "gamedev" | "communication" | "utilities";
+export const PURPOSES: Purpose[] = ["gaming", "browsers", "creator", "developer", "gamedev", "communication", "utilities"];
 
 export interface AppItem {
   id: string;
@@ -85,6 +87,15 @@ export const APPS: AppItem[] = [
   { id: "python", winget: "Python.Python.3.12", name: "Python", purpose: "developer", icon: Terminal, desc: d("Python 3.12", "Python 3.12", "Python 3.12") },
   { id: "terminal", winget: "Microsoft.WindowsTerminal", name: "Windows Terminal", purpose: "developer", icon: SquareTerminal, desc: d("Modern terminal", "Modernes Terminal", "Modern terminal") },
   { id: "powertoys", winget: "Microsoft.PowerToys", name: "PowerToys", purpose: "developer", icon: Wrench, desc: d("Windows power utilities", "Windows-Power-Tools", "Windows güç araçları") },
+  { id: "claude", winget: "Anthropic.Claude", name: "Claude", purpose: "developer", icon: Sparkles, desc: d("Anthropic AI desktop app", "Anthropic-KI-Desktop-App", "Anthropic YZ masaüstü uygulaması") },
+  { id: "claudecode", winget: "Anthropic.ClaudeCode", name: "Claude Code", purpose: "developer", icon: Terminal, desc: d("Agentic coding in your terminal", "Agentisches Coden im Terminal", "Terminalde ajan tabanlı kodlama") },
+  { id: "antigravity", winget: "Google.Antigravity", name: "Antigravity", purpose: "developer", icon: Rocket, desc: d("Google's agentic AI IDE", "Googles agentische KI-IDE", "Google'ın ajan tabanlı YZ IDE'si") },
+  { id: "vscommunity", winget: "Microsoft.VisualStudio.2022.Community", name: "Visual Studio", purpose: "developer", icon: Code2, desc: d("Full IDE (C#, C++, game dev)", "Voll-IDE (C#, C++, Game Dev)", "Tam IDE (C#, C++, oyun)") },
+
+  // 🕹️ game dev
+  { id: "godot", winget: "GodotEngine.GodotEngine", name: "Godot Engine", purpose: "gamedev", icon: Joystick, desc: d("Open-source game engine", "Open-Source-Spiel-Engine", "Açık kaynak oyun motoru") },
+  { id: "unityhub", winget: "Unity.UnityHub", name: "Unity Hub", purpose: "gamedev", icon: Boxes, desc: d("Manage Unity engine versions", "Unity-Engine-Versionen verwalten", "Unity sürümlerini yönet") },
+  { id: "blenderdev", winget: "BlenderFoundation.Blender", name: "Blender", purpose: "gamedev", icon: Box, desc: d("3D modeling for games", "3D-Modellierung für Spiele", "Oyunlar için 3D modelleme") },
 
   // 💬 communication
   { id: "discord", winget: "Discord.Discord", name: "Discord", purpose: "communication", icon: MessageCircle, desc: d("Voice & chat", "Voice & Chat", "Sesli & sohbet") },

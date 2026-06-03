@@ -101,6 +101,7 @@ const dict: Dict = {
   purpose_browsers: { en: "Browsers", de: "Browser", tr: "Tarayıcı" },
   purpose_creator: { en: "Creator", de: "Creator", tr: "İçerik" },
   purpose_developer: { en: "Developer", de: "Entwickler", tr: "Geliştirici" },
+  purpose_gamedev: { en: "Game Dev", de: "Spiele-Dev", tr: "Oyun Geliştirme" },
   purpose_communication: { en: "Communication", de: "Kommunikation", tr: "İletişim" },
   purpose_utilities: { en: "Utilities", de: "Werkzeuge", tr: "Araçlar" },
   search_apps: { en: "Search apps…", de: "Apps suchen…", tr: "Uygulama ara…" },
