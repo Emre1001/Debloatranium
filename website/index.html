@@ -3,486 +3,218 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Debloatranium — Windows, minus the bloat</title>
-<meta name="description" content="Free, open-source Windows 10 & 11 optimizer. Removes telemetry, ads, Copilot and preinstalled apps, installs the software you use. One portable 8 MB .exe." />
-<meta name="theme-color" content="#0a0b0a" />
-<meta property="og:title" content="Debloatranium — Windows, minus the bloat" />
-<meta property="og:description" content="Free, open-source Windows optimizer. One slider from Minimal to Zero. Portable, ~8 MB." />
-<meta property="og:image" content="https://emre1001.github.io/Debloatranium/assets/og.png" />
+<title>Debloatranium: remove ads, telemetry and Copilot from Windows</title>
+<meta name="description" content="Free, open-source tool for Windows 10 and 11. Removes ads, telemetry, Copilot and preinstalled apps, and installs the programs you choose. Portable .exe, about 8 MB." />
+<meta name="theme-color" content="#0c0e0d" />
+<meta property="og:title" content="Debloatranium" />
+<meta property="og:description" content="Free, open-source tool that removes ads, telemetry, Copilot and preinstalled apps from Windows 10 and 11." />
+<meta property="og:image" content="https://emre1001.github.io/Debloatranium/assets/shots/en-level2.webp" />
 <meta property="og:type" content="website" />
 <link rel="icon" type="image/png" href="assets/icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/style.css" />
 </head>
-<body class="is-loading">
+<body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="trefoil" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
-    <path fill="currentColor" d="M12 1.5a10.5 10.5 0 0 0-5.25 1.41l3 5.2A4.5 4.5 0 0 1 12 7.5a4.5 4.5 0 0 1 2.25.6l3-5.19A10.5 10.5 0 0 0 12 1.5zm9.09 16.59-3-5.2A4.5 4.5 0 0 1 16.5 12h6a10.5 10.5 0 0 0-1.41-5.25zM1.5 12h6a4.5 4.5 0 0 1 1.41-3.11l-3-5.2A10.5 10.5 0 0 0 1.5 12zm10.5 10.5a10.5 10.5 0 0 0 5.25-1.41l-3-5.2A4.5 4.5 0 0 1 12 16.5a4.5 4.5 0 0 1-2.25-.6l-3 5.19A10.5 10.5 0 0 0 12 22.5z"/>
-  </symbol>
-  <symbol id="arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" d="M5 12h13M13 6l6 6-6 6"/></symbol>
-  <symbol id="down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" d="M12 4v13M6 12l6 6 6-6M5 21h14"/></symbol>
-</svg>
-
-<!-- intro -->
-<div class="intro" aria-hidden="true">
-  <div class="intro__row">
-    <span class="intro__label" lang="en">Debloatranium</span>
-    <span class="intro__count"><span id="introNum">000</span>%</span>
-  </div>
-  <div class="intro__bar"><i></i></div>
-  <div class="intro__row intro__row--sub">
-    <span id="introLog">init</span>
-    <span>Element 0</span>
-  </div>
-</div>
-
-<div class="progress" aria-hidden="true"><i></i></div>
-
-<!-- nav -->
 <header class="nav">
-  <a class="nav__brand" href="#top" aria-label="Debloatranium">
-    <svg class="nav__mark"><use href="#trefoil"/></svg>
-    <span lang="en">Debloatranium</span>
-  </a>
-  <nav class="nav__links" aria-label="Sections">
-    <a href="#levels"><span class="num">01</span><span data-i="nav_levels">Levels</span></a>
-    <a href="#process"><span class="num">02</span><span data-i="nav_process">Process</span></a>
-    <a href="#spec"><span class="num">03</span><span data-i="nav_spec">Spec</span></a>
-    <a href="#apps"><span class="num">04</span><span data-i="nav_apps">Apps</span></a>
-    <a href="#faq"><span class="num">05</span><span>FAQ</span></a>
-  </nav>
-  <div class="nav__right">
-    <div class="lang" role="group" aria-label="Language">
-      <button data-lang="en">EN</button><button data-lang="de">DE</button><button data-lang="tr">TR</button>
-      <i class="lang__ind"></i>
-    </div>
-    <a class="btn btn--sm js-dl" href="https://github.com/Emre1001/Debloatranium/releases/latest" target="_blank" rel="noopener">
-      <span data-i="nav_dl">Download</span>
+  <div class="nav__in wrap">
+    <a class="brand" href="#top">
+      <img src="assets/icon.png" width="26" height="26" alt="" />
+      <span>Debloatranium</span>
     </a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#how" data-i="nav_how">How it works</a>
+      <a href="#levels" data-i="nav_levels">What it changes</a>
+      <a href="#apps" data-i="nav_apps">Apps</a>
+      <a href="#faq" data-i="nav_faq">FAQ</a>
+    </nav>
+    <div class="nav__end">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="de">DE</button>
+        <button type="button" data-lang="tr">TR</button>
+      </div>
+      <a class="btn btn--small js-dl" href="https://github.com/Emre1001/Debloatranium/releases/latest" data-i="nav_dl">Download</a>
+    </div>
   </div>
 </header>
 
 <main>
 
-<!-- ============ HERO ============ -->
-<section class="hero" id="top">
-  <div class="hero__grid" aria-hidden="true"></div>
-  <div class="hero__decay" aria-hidden="true" lang="en"></div>
-  <div class="hero__coords mono" aria-hidden="true">X <span id="cx">0000</span> &nbsp;Y <span id="cy">0000</span></div>
-
-  <div class="hero__inner wrap">
-    <div class="hero__meta mono">
-      <span class="dot"></span>
-      <span><span data-i="hero_tag">Windows optimizer · Free &amp; open source</span> · <span class="js-ver">v1.0.0</span></span>
-    </div>
-
-    <h1 class="hero__title">
-      <span class="line"><span data-i="h1_a">Windows,</span></span>
-      <span class="line"><span data-i="h1_b">minus</span></span>
-      <span class="line"><span data-i="h1_c">the bloat.</span></span>
-    </h1>
-
-    <div class="hero__bottom">
-      <p class="hero__lead fade-up" data-i="hero_lead">Debloatranium strips telemetry, ads, Copilot and preinstalled junk out of Windows&nbsp;10 &amp; 11, then installs the software you actually use. One wizard. One slider. One click.</p>
-      <div class="hero__cta fade-up">
-        <a class="btn btn--lg js-dl js-burst" href="https://github.com/Emre1001/Debloatranium/releases/latest" target="_blank" rel="noopener">
-          <svg width="18" height="18"><use href="#down"/></svg>
-          <span data-i="cta_dl">Download for Windows</span>
-        </a>
-        <a class="btn btn--ghost btn--lg" href="https://github.com/Emre1001/Debloatranium" target="_blank" rel="noopener">
-          <span data-i="cta_gh">Source on GitHub</span>
-          <span class="js-stars mono"></span>
-        </a>
-      </div>
-    </div>
-
-    <!-- element tile -->
-    <div class="element" aria-label="Debloatranium element tile">
-      <div class="element__card">
-        <div class="element__top mono"><span class="element__z">0</span><span>8.0&nbsp;MB</span></div>
-        <div class="element__sym">Dr</div>
-        <div class="element__name">Debloatranium</div>
-        <div class="element__foot mono">
-          <span data-i="el_half">Half-life of bloat</span><span>0.00 s</span>
-        </div>
-        <svg class="element__orbit" viewBox="0 0 200 200" aria-hidden="true">
-          <ellipse cx="100" cy="100" rx="96" ry="34"/>
-          <ellipse cx="100" cy="100" rx="96" ry="34" transform="rotate(60 100 100)"/>
-          <ellipse cx="100" cy="100" rx="96" ry="34" transform="rotate(120 100 100)"/>
-          <circle class="e e1" r="3"/><circle class="e e2" r="3"/><circle class="e e3" r="3"/>
-        </svg>
-        <i class="element__led"></i>
-      </div>
-      <div class="element__caption mono"><span data-i="el_cap">Fig. 0 — Element tile, actual size: 8&nbsp;MB</span></div>
-    </div>
-  </div>
-
-  <div class="hero__stats wrap">
-    <div class="stat"><span class="stat__k mono" data-i="st_size">Size</span><span class="stat__v"><b class="js-count" data-to="8">0</b><small>MB</small></span></div>
-    <div class="stat"><span class="stat__k mono" data-i="st_ram">Memory</span><span class="stat__v"><small>~</small><b class="js-count" data-to="40">0</b><small>MB</small></span></div>
-    <div class="stat"><span class="stat__k mono" data-i="st_tweaks">Tweaks</span><span class="stat__v"><b class="js-count" data-to="46">0</b></span></div>
-    <div class="stat"><span class="stat__k mono" data-i="st_apps">Apps</span><span class="stat__v"><b class="js-count" data-to="51">0</b></span></div>
-    <div class="stat"><span class="stat__k mono" data-i="st_price">Price</span><span class="stat__v"><b class="js-count" data-to="0">0</b><small>€</small></span></div>
-  </div>
-</section>
-
-<!-- ============ TICKER ============ -->
-<div class="ticker" aria-hidden="true">
-  <div class="ticker__track"></div>
-</div>
-
-<!-- ============ STATEMENT ============ -->
-<section class="statement wrap">
-  <p class="mono label"><span class="num">00</span> <span data-i="st_label">The problem</span></p>
-  <p class="statement__text js-words" data-i="statement">Windows ships with Copilot, Bing inside your Start menu, ads on the lock screen, telemetry running in the background and a dozen apps nobody asked for. <em>Debloatranium takes your PC back. In one slide.</em></p>
-</section>
-
-<!-- ============ LEVELS ============ -->
-<section class="levels" id="levels">
-  <div class="wrap">
-    <div class="head">
-      <p class="mono label"><span class="num">01</span> <span data-i="lv_label">Construction levels</span></p>
-      <h2 class="h2 reveal-lines" data-i="lv_title">Choose how deep it&nbsp;goes.</h2>
-      <p class="head__lead" data-i="lv_lead">Four levels. Each one includes everything before it. Drag the fader and watch the manifest below update — that is exactly what gets changed on your machine.</p>
-    </div>
-
-    <div class="console">
-      <div class="console__readout">
-        <div class="readout__num"><span class="js-lv-count">17</span><small>/46</small></div>
-        <div class="readout__txt">
-          <span class="mono readout__lvl"><span class="js-lv-idx">02</span> — <span class="js-lv-name">Balanced</span></span>
-          <p class="js-lv-desc">Cleaner desktop: hide widgets, task view, Bing in search.</p>
-        </div>
-        <div class="readout__bars mono">
-          <div><span data-i="cat_privacy">Privacy &amp; AI</span><i><b class="js-bar" data-cat="privacy"></b></i><em class="js-bar-n" data-cat="privacy">0</em></div>
-          <div><span data-i="cat_performance">Performance</span><i><b class="js-bar" data-cat="performance"></b></i><em class="js-bar-n" data-cat="performance">0</em></div>
-          <div><span data-i="cat_taskbar">Taskbar &amp; Explorer</span><i><b class="js-bar" data-cat="taskbar"></b></i><em class="js-bar-n" data-cat="taskbar">0</em></div>
-          <div><span data-i="cat_debloat">Remove apps</span><i><b class="js-bar" data-cat="debloat"></b></i><em class="js-bar-n" data-cat="debloat">0</em></div>
-        </div>
-      </div>
-
-      <div class="fader" role="slider" tabindex="0" aria-label="Construction level" aria-valuemin="1" aria-valuemax="4" aria-valuenow="2">
-        <div class="fader__labels mono">
-          <button data-lv="1"><span>01</span><b data-i="lv_1">Minimal</b></button>
-          <button data-lv="2"><span>02</span><b data-i="lv_2">Balanced</b></button>
-          <button data-lv="3"><span>03</span><b data-i="lv_3">Aggressive</b></button>
-          <button data-lv="4"><span>04</span><b data-i="lv_4">Zero</b></button>
-        </div>
-        <div class="fader__rail">
-          <div class="fader__ticks"></div>
-          <div class="fader__slot"><i class="fader__fill"></i></div>
-          <div class="fader__cap"><i></i><i></i><i></i></div>
-        </div>
-        <p class="fader__hint mono" data-i="lv_hint">Drag, click a level, or use ← → keys</p>
-      </div>
-
-      <div class="manifest">
-        <div class="manifest__head mono">
-          <span>#</span><span data-i="mf_tweak">Tweak</span><span data-i="mf_cat">Category</span><span data-i="mf_from">From</span><span data-i="mf_state">State</span>
-        </div>
-        <div class="manifest__body"></div>
-        <p class="manifest__note mono js-zero-note" data-i="mf_note">Level 04 removes built-in apps. Removals are one-way — a System Restore Point is created first.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ PROCESS (pinned horizontal) ============ -->
-<section class="process" id="process">
-  <div class="process__pin">
-    <div class="process__head wrap">
-      <p class="mono label"><span class="num">02</span> <span data-i="pr_label">Process</span></p>
-      <h2 class="h2" data-i="pr_title">Six screens. No guesswork.</h2>
-      <div class="process__counter mono"><span class="js-pr-cur">01</span> / 06</div>
-    </div>
-    <div class="process__track">
-
-      <article class="step">
-        <div class="step__num mono">01</div>
-        <div class="step__body">
-          <h3 data-i="s1_t">Pick a language</h3>
-          <p data-i="s1_d">English, Deutsch or Türkçe. Switch live at any point — every label follows along.</p>
-        </div>
-        <div class="screen screen--lang">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>Debloatranium</div>
-          <div class="screen__in" lang="en">
-            <svg class="big-mark" width="56" height="56"><use href="#trefoil"/></svg>
-            <div class="screen__title">Ultimate System Cleanup</div>
-            <div class="pills mono"><span>English US</span><span>Deutsch</span><span>Türkçe</span></div>
+  <!-- Hero -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <h1 class="hero__title rise" data-i="h1">Get the ads, telemetry and Copilot out of Windows.</h1>
+      <div class="hero__row">
+        <p class="hero__text rise" data-i="hero_p">Debloatranium is a free, open-source tool for Windows 10 and 11. You choose how far it should go and which programs to install, and it takes care of the rest. It sets a restore point before it changes anything.</p>
+        <div class="hero__actions rise">
+          <div class="hero__buttons">
+            <a class="btn js-dl" href="https://github.com/Emre1001/Debloatranium/releases/latest">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2.5 14h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i="btn_dl">Download for Windows</span>
+            </a>
+            <a class="btn btn--plain" href="https://github.com/Emre1001/Debloatranium" data-i="btn_src">View source on GitHub</a>
           </div>
-        </div>
-      </article>
-
-      <article class="step">
-        <div class="step__num mono">02</div>
-        <div class="step__body">
-          <h3 data-i="s2_t">Detect the hardware</h3>
-          <p data-i="s2_d">Your GPU is detected automatically — NVIDIA, AMD or Intel — and its official driver app is queued. Switch off WiFi, Bluetooth or printer services you don't use.</p>
-        </div>
-        <div class="screen screen--hw">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>Hardware</div>
-          <div class="screen__in" lang="en">
-            <div class="scan mono"><span class="scan__line"></span>GPU · <b>NVIDIA</b> <em>detected</em></div>
-            <div class="sw"><span>WiFi / WLAN</span><i class="tg on"></i></div>
-            <div class="sw"><span>Bluetooth</span><i class="tg"></i></div>
-            <div class="sw"><span>Printer</span><i class="tg"></i></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="step">
-        <div class="step__num mono">03</div>
-        <div class="step__body">
-          <h3 data-i="s3_t">Modus or Custom</h3>
-          <p data-i="s3_d">Take a curated level, or switch to Custom and flip every single tweak by hand.</p>
-        </div>
-        <div class="screen screen--mode">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>Optimization Mode</div>
-          <div class="screen__in" lang="en">
-            <div class="choice is-on"><b>Modus</b><span>Optimized profiles with smooth level control.</span></div>
-            <div class="choice"><b>Custom</b><span>Total control over every single mini-setting.</span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="step">
-        <div class="step__num mono">04</div>
-        <div class="step__body">
-          <h3 data-i="s4_t">Slide to a level</h3>
-          <p data-i="s4_d">Minimal, Balanced, Aggressive or Zero. The fader above is the same control you get in the app.</p>
-        </div>
-        <div class="screen screen--slide">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>Construction Level</div>
-          <div class="screen__in" lang="en">
-            <div class="mini-lvl">Zero</div>
-            <div class="mini-rail"><i></i><b></b></div>
-            <div class="mini-stops mono"><span>Minimal</span><span>Balanced</span><span>Aggressive</span><span>Zero</span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="step">
-        <div class="step__num mono">05</div>
-        <div class="step__body">
-          <h3 data-i="s5_t">Choose your apps</h3>
-          <p data-i="s5_d">50+ packages across seven categories, installed silently through winget. WinRAR comes along every time.</p>
-        </div>
-        <div class="screen screen--apps">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>App Setup</div>
-          <div class="screen__in" lang="en">
-            <div class="search mono"><span class="search__q"></span><i class="caret"></i></div>
-            <div class="mini-apps">
-              <span class="is-on">Steam</span><span>Epic Games</span><span class="is-on">Discord</span>
-              <span>OBS Studio</span><span class="is-on">Firefox</span><span>VS Code</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="step">
-        <div class="step__num mono">06</div>
-        <div class="step__body">
-          <h3 data-i="s6_t">Construct</h3>
-          <p data-i="s6_d">A restore point first. Then live progress, fullscreen. When it's done, one click restarts the PC.</p>
-        </div>
-        <div class="screen screen--build">
-          <div class="screen__bar mono" lang="en"><svg width="12" height="12"><use href="#trefoil"/></svg>Constructing</div>
-          <div class="screen__in" lang="en">
-            <div class="build-pct mono"><span class="js-mini-pct">0</span>%</div>
-            <div class="build-bar"><i></i></div>
-            <div class="build-log mono">
-              <span>✓ Creating restore point</span><span>✓ Applying Dark Mode</span><span>✓ Disable Telemetry</span><span>· Installing Steam</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-    </div>
-    <div class="process__rail"><i></i></div>
-  </div>
-</section>
-
-<!-- ============ SPEC (paper) ============ -->
-<section class="spec" id="spec">
-  <div class="spec__wipe">
-    <div class="wrap spec__grid">
-      <div class="spec__side">
-        <p class="mono label"><span class="num">03</span> <span data-i="sp_label">Datasheet</span></p>
-        <h2 class="h2" data-i="sp_title">What's inside. In plain terms.</h2>
-        <p class="spec__note" data-i="sp_note">No marketing adjectives. This is the list of what Debloatranium touches on your system.</p>
-        <div class="spec__fig">
-          <div><b class="js-count" data-to="46">0</b><span data-i="fig_1">registry &amp; service tweaks</span></div>
-          <div><b class="js-count" data-to="6">0</b><span data-i="fig_2">deep one-shot actions</span></div>
-          <div><b class="js-count" data-to="3">0</b><span data-i="fig_3">GPU vendors detected</span></div>
+          <p class="hero__meta"><span data-i="meta_v">Version</span> <span class="js-ver">1.0.1</span> · <span data-i="meta_exe">Portable .exe,</span> <span class="js-size" data-i="f_size_v">about 8 MB</span> · <span data-i="meta_none">No installation</span></p>
         </div>
       </div>
-
-      <ol class="sheet">
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.1</span>
-          <div><h3 data-i="f1_t">Privacy &amp; telemetry</h3><p data-i="f1_d">Telemetry, the DiagTrack service, Advertising ID, tailored ads, activity history, location, error reporting, inking &amp; typing data, CEIP, Cortana, Copilot and Bing in Start search.</p></div>
-          <span class="sheet__tag mono">REG · SVC</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.2</span>
-          <div><h3 data-i="f2_t">Performance</h3><p data-i="f2_d">High-performance power plan, Game Mode, hardware GPU scheduling, no power throttling, no background apps, no startup delay, best-performance visuals, temp-file cleanup.</p></div>
-          <span class="sheet__tag mono">REG · PWR</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.3</span>
-          <div><h3 data-i="f3_t">Debloat</h3><p data-i="f3_d">Removes Copilot, Solitaire, News, Clipchamp, Xbox, Maps, Weather, Phone Link, Get Help, Feedback Hub, Quick Assist, To Do and personal Teams. Optionally uninstalls Microsoft Edge (experimental).</p></div>
-          <span class="sheet__tag mono">APPX</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.4</span>
-          <div><h3 data-i="f4_t">Deep optimization</h3><p data-i="f4_d">Disable SysMain and search indexing, turn off hibernation to free several GB, flush the DNS cache, remove OneDrive completely.</p></div>
-          <span class="sheet__tag mono">ADMIN</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.5</span>
-          <div><h3 data-i="f5_t">Drivers</h3><p data-i="f5_d">Detects NVIDIA, AMD or Intel graphics and installs the vendor's official driver app via winget.</p></div>
-          <span class="sheet__tag mono">WINGET</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.6</span>
-          <div><h3 data-i="f6_t">Safety</h3><p data-i="f6_d">Creates a System Restore Point before anything runs. Every registry toggle is reversible — off means Windows default. Relaunches itself as Administrator when needed.</p></div>
-          <span class="sheet__tag mono">RESTORE</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.7</span>
-          <div><h3 data-i="f7_t">Build</h3><p data-i="f7_d">Tauri v2 with a Rust backend on the WebView2 runtime that ships with Windows. One portable .exe, no installer, no .NET, around 40 MB of RAM.</p></div>
-          <span class="sheet__tag mono">RUST</span>
-        </li>
-        <li class="sheet__row">
-          <span class="sheet__n mono">3.8</span>
-          <div><h3 data-i="f8_t">License</h3><p data-i="f8_d">MIT. No account, no ads, no telemetry of its own. Every line is on GitHub.</p></div>
-          <span class="sheet__tag mono">MIT</span>
-        </li>
-      </ol>
-    </div>
-  </div>
-</section>
-
-<!-- ============ APPS ============ -->
-<section class="apps" id="apps">
-  <div class="wrap">
-    <div class="head">
-      <p class="mono label"><span class="num">04</span> <span data-i="ap_label">Packing list</span></p>
-      <h2 class="h2 reveal-lines" data-i="ap_title">Bring the apps you&nbsp;use.</h2>
-      <p class="head__lead" data-i="ap_lead">Every package below is in the app. Tick a few — the winget command builds itself, exactly like Debloatranium runs it.</p>
     </div>
 
-    <div class="pack">
-      <div class="pack__tools">
-        <div class="tabs mono" role="tablist"></div>
-        <label class="find mono">
-          <span>/</span>
-          <input type="search" class="js-find" placeholder="Search apps" data-i-ph="ap_search" autocomplete="off" spellcheck="false" />
-        </label>
+    <div class="stage wrap">
+      <figure class="window js-tilt">
+        <div class="window__frames" data-frames="welcome level2 level4 apps done"></div>
+      </figure>
+      <div class="reel" role="tablist" aria-label="App screens"></div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 data-i="how_h">How it works</h2>
+        <p data-i="how_p">The app is a short wizard. These are the actual screens.</p>
       </div>
-      <div class="pack__list" role="list"></div>
-      <p class="pack__empty mono" hidden data-i="ap_none">No apps found.</p>
-      <div class="cmd mono">
-        <span class="cmd__ps">PS&gt;</span>
-        <code class="cmd__code"></code>
-        <button class="cmd__copy" type="button" data-i="ap_copy">Copy</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ CONSTRUCT ============ -->
-<section class="construct" id="construct">
-  <div class="wrap">
-    <div class="head">
-      <p class="mono label"><span class="num">05</span> <span data-i="cn_label">Construct</span></p>
-      <h2 class="h2 reveal-lines" data-i="cn_title">Then it builds. You watch.</h2>
-    </div>
-
-    <div class="term">
-      <div class="term__bar mono">
-        <span><svg width="12" height="12"><use href="#trefoil"/></svg> <span data-i="cn_bar">Constructing your system</span></span>
-        <span class="js-term-state">idle</span>
-      </div>
-      <div class="term__grid">
-        <div class="term__left">
-          <div class="term__pct"><span class="js-pct">0</span><small>%</small></div>
-          <div class="term__blocks mono" aria-hidden="true"></div>
-          <p class="term__cur mono js-cur">—</p>
-          <div class="term__done">
-            <p class="term__done-t" data-i="cn_done">Construction complete.</p>
-            <button class="btn js-restart" type="button"><span data-i="cn_restart">Restart PC</span></button>
-            <button class="term__replay mono js-replay" type="button" data-i="cn_replay">Run again</button>
-          </div>
+      <div class="how__grid">
+        <ol class="how__steps">
+          <li class="step" data-frames="welcome">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s1_h">Pick a language</h3>
+            <p data-i="s1_p">English, German or Turkish. You can change it later.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+          <li class="step" data-frames="hardware">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s2_h">Check your hardware</h3>
+            <p data-i="s2_p">Turn off Wi-Fi, Bluetooth or printer services if your PC doesn't use them. Everything stays on unless you switch it off.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+          <li class="step" data-frames="mode">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s3_h">Preset or custom</h3>
+            <p data-i="s3_p">Presets are the quick way. Custom lists every single setting so you can decide one by one.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+          <li class="step" data-frames="level2 level4">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s4_h">Choose a level</h3>
+            <p data-i="s4_p">Four levels, from Minimal to Zero. Each one adds to the previous. Zero also uninstalls preinstalled apps like Clipchamp, Solitaire and the Xbox app.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+          <li class="step" data-frames="apps">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s5_h">Apps and extras</h3>
+            <p data-i="s5_p">Pick programs to install through winget, Microsoft's package manager. This is also where you find the GPU driver, the power plan, cleanup options and the optional Edge removal.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+          <li class="step" data-frames="review loading done">
+            <span class="step__bar"><i></i></span>
+            <h3 data-i="s6_h">Review and run</h3>
+            <p data-i="s6_p">You get a summary first. Then a progress screen shows each step as it runs, and at the end you can restart your PC from the app.</p>
+            <img class="step__img" alt="" loading="lazy" />
+          </li>
+        </ol>
+        <div class="how__sticky">
+          <figure class="window window--small">
+            <div class="window__frames" data-frames="welcome hardware mode level2 level4 apps review loading done"></div>
+          </figure>
         </div>
-        <ol class="term__log mono"></ol>
       </div>
-      <div class="term__flash" aria-hidden="true"><svg width="40" height="40"><use href="#trefoil"/></svg></div>
     </div>
-    <p class="term__disclaimer mono" data-i="cn_disc">Simulation. Nothing is running on your computer.</p>
-  </div>
-</section>
+  </section>
 
-<!-- ============ FAQ ============ -->
-<section class="faq" id="faq">
-  <div class="wrap faq__grid">
-    <div>
-      <p class="mono label"><span class="num">06</span> <span>FAQ</span></p>
-      <h2 class="h2" data-i="fq_title">Fair questions.</h2>
-    </div>
-    <div class="acc">
-      <details><summary><span data-i="q1">Is it safe?</span><i></i></summary><div class="acc__a"><p data-i="a1">Registry tweaks are reversible — switching one off restores the Windows default. A System Restore Point is created before anything runs. Review what you enable; you are in control of every change.</p></div></details>
-      <details><summary><span data-i="q2">What can't be undone?</span><i></i></summary><div class="acc__a"><p data-i="a2">Removing built-in apps (level Zero) and uninstalling Edge are one-way. Edge removal is experimental — Windows Update may bring it back.</p></div></details>
-      <details><summary><span data-i="q3">Do I need administrator rights?</span><i></i></summary><div class="acc__a"><p data-i="a3">For telemetry, services and drivers, yes. If you start it normally, Debloatranium offers a one-click relaunch as Administrator.</p></div></details>
-      <details><summary><span data-i="q4">Does it need to be installed?</span><i></i></summary><div class="acc__a"><p data-i="a4">No. It's a single portable .exe of about 8 MB. It uses WebView2, which is already part of Windows 10 (1803+) and Windows 11.</p></div></details>
-      <details><summary><span data-i="q5">Which Windows versions?</span><i></i></summary><div class="acc__a"><p data-i="a5">Windows 10 (1803 and newer) and Windows 11. A few tweaks, like the left-aligned taskbar, only apply on Windows 11.</p></div></details>
-      <details><summary><span data-i="q6">Is it really free?</span><i></i></summary><div class="acc__a"><p data-i="a6">Yes. MIT licensed, no account, no ads, no telemetry of its own. If it made your PC faster, a donation is welcome.</p></div></details>
-    </div>
-  </div>
-</section>
+  <!-- Levels -->
+  <section class="levels" id="levels">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 data-i="lv_h">What each level changes</h2>
+        <p data-i="lv_p">This list comes straight from the app's source code. Each level includes everything from the levels before it.</p>
+      </div>
 
-<!-- ============ DOWNLOAD ============ -->
-<section class="final" id="download">
-  <div class="final__in wrap">
-    <p class="mono label"><span class="num">07</span> <span data-i="dl_label">Download</span></p>
-    <h2 class="final__title">
-      <span class="line"><span data-i="dl_a">Slide to</span></span>
-      <span class="line"><span data-i="dl_b">Zero.</span></span>
-    </h2>
-    <div class="final__row">
-      <a class="btn btn--xl btn--ink js-dl js-burst" href="https://github.com/Emre1001/Debloatranium/releases/latest" target="_blank" rel="noopener">
-        <svg width="20" height="20"><use href="#down"/></svg>
-        <span data-i="dl_btn">Download Debloatranium</span>
-        <span class="mono btn__sub js-ver">v1.0.0</span>
-      </a>
-      <dl class="final__req mono">
-        <div><dt data-i="rq_os">System</dt><dd lang="en">Windows 10 / 11</dd></div>
-        <div><dt data-i="rq_size">Size</dt><dd lang="en">~8 MB, portable</dd></div>
-        <div><dt data-i="rq_run">Run as</dt><dd lang="en">Administrator</dd></div>
-        <div><dt data-i="rq_price">Price</dt><dd data-i="rq_free">Free, MIT</dd></div>
-      </dl>
+      <div class="seg" role="radiogroup" aria-label="Level">
+        <button type="button" role="radio" data-lv="1" data-i="lv_1">Minimal</button>
+        <button type="button" role="radio" data-lv="2" data-i="lv_2">Balanced</button>
+        <button type="button" role="radio" data-lv="3" data-i="lv_3">Aggressive</button>
+        <button type="button" role="radio" data-lv="4" data-i="lv_4">Zero</button>
+        <i class="seg__pill" aria-hidden="true"></i>
+      </div>
+
+      <div class="lv-summary">
+        <p class="lv-count"><b class="js-count">17</b> <span class="js-count-label"></span></p>
+        <p class="lv-desc js-desc"></p>
+      </div>
+
+      <div class="cats"></div>
+      <p class="lv-note js-note" data-i="lv_note">Removing apps can't be undone from inside Debloatranium. Most of them can be reinstalled from the Microsoft Store.</p>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- Apps -->
+  <section class="apps" id="apps">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 data-i="ap_h">Apps you can install</h2>
+        <p data-i="ap_p">51 programs in seven groups. You select them in the app and they're installed one after another. WinRAR is always included.</p>
+      </div>
+      <div class="groups"></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="wrap faq__grid">
+      <div class="section-head section-head--side">
+        <h2 data-i="fq_h">Questions</h2>
+      </div>
+      <div class="qa">
+        <details><summary data-i="q1">Can I undo the changes?</summary><div class="qa__a"><p data-i="a1">Yes, for all settings: switching one off puts the Windows default back. Removed apps are the exception. A System Restore Point is created before the first change, so you can roll back the whole system as well.</p></div></details>
+        <details><summary data-i="q2">Do I need admin rights?</summary><div class="qa__a"><p data-i="a2">For most changes, yes. If you start the app without them, it shows a button to restart it as administrator.</p></div></details>
+        <details><summary data-i="q3">Does it need to be installed?</summary><div class="qa__a"><p data-i="a3">No. It's a single .exe of about 8 MB. It uses WebView2, which is part of Windows 10 (version 1803 and later) and Windows 11.</p></div></details>
+        <details><summary data-i="q4">What about Microsoft Edge?</summary><div class="qa__a"><p data-i="a4">Edge removal is optional and marked as risky in the app. It works, but Windows Update may install Edge again.</p></div></details>
+        <details><summary data-i="q5">Does Debloatranium collect any data?</summary><div class="qa__a"><p data-i="a5">No. There's no account, no analytics and no ads. The full source code is on GitHub.</p></div></details>
+        <details><summary data-i="q6">Which Windows versions are supported?</summary><div class="qa__a"><p data-i="a6">Windows 10 from version 1803 and Windows 11. A few settings, such as the left-aligned taskbar, only have an effect on Windows 11.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="get" id="download">
+    <div class="wrap">
+      <div class="get__card">
+        <div class="get__main">
+          <img src="assets/icon.png" width="64" height="64" alt="" />
+          <h2 data-i="dl_h">Download</h2>
+          <p data-i="dl_p">Free and open source under the MIT license.</p>
+          <a class="btn js-dl" href="https://github.com/Emre1001/Debloatranium/releases/latest">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2.5 14h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-i="dl_btn">Download Debloatranium.exe</span>
+          </a>
+        </div>
+        <dl class="get__facts">
+          <div><dt data-i="f_ver">Version</dt><dd class="js-ver">1.0.1</dd></div>
+          <div><dt data-i="f_date">Released</dt><dd class="js-date">–</dd></div>
+          <div><dt data-i="f_size">Size</dt><dd class="js-size" data-i="f_size_v">about 8 MB</dd></div>
+          <div><dt data-i="f_req">Requires</dt><dd data-i="f_req_v">Windows 10 (1803+) or Windows 11</dd></div>
+        </dl>
+      </div>
+      <ul class="get__links">
+        <li><a href="https://github.com/Emre1001/Debloatranium/releases" data-i="l_rel">All releases</a></li>
+        <li><a href="https://github.com/Emre1001/Debloatranium" data-i="l_src">Source code</a></li>
+        <li><a href="https://github.com/Emre1001/Debloatranium/issues" data-i="l_bug">Report a bug</a></li>
+        <li><a href="https://paypal.me/Emre100120" data-i="l_don">Support the project</a></li>
+      </ul>
+    </div>
+  </section>
 
 </main>
 
 <footer class="foot">
-  <div class="wrap foot__row mono">
-    <span>© Emre1001 · MIT</span>
-    <span class="foot__links" lang="en">
-      <a href="https://github.com/Emre1001/Debloatranium" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://github.com/Emre1001/Debloatranium/releases" target="_blank" rel="noopener">Releases</a>
-      <a href="https://github.com/Emre1001/Debloatranium/issues" target="_blank" rel="noopener">Issues</a>
-      <a href="https://paypal.me/Emre100120" target="_blank" rel="noopener" data-i="ft_donate">Donate</a>
-    </span>
-    <a href="#top" class="foot__top"><span data-i="ft_top">Back to top</span> ↑</a>
+  <div class="wrap foot__in">
+    <span data-i="foot">Debloatranium by Emre1001. MIT license.</span>
+    <a href="#top" data-i="top">Back to top</a>
   </div>
-  <div class="foot__word" aria-hidden="true" lang="en">Debloatranium</div>
 </footer>
 
 <script src="assets/data.js"></script>
